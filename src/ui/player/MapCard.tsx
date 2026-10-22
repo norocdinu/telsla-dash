@@ -1,12 +1,13 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useMemo, useRef } from 'react';
-import { MAP_TOOLTIP } from '../../app/messages';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { MAP_OFFLINE, MAP_TOOLTIP } from '../../app/messages';
 import { appStore, playStore } from '../../app/state';
 import { useStore } from '../../app/store';
 import type { Timeline } from '../../library/types';
 import { joinRoute, routeBounds, type LatLon } from '../../sei/route';
 import { MapIcon } from '../icons';
+import { mapOffline } from './map-status';
 
 const NO_ROUTE: (LatLon[] | undefined)[] = [];
 
@@ -52,15 +53,38 @@ export function MapCard({ tl }: { tl: Timeline }) {
   const map = useRef<L.Map | null>(null);
   const line = useRef<L.Polyline | null>(null);
   const car = useRef<L.Marker | null>(null);
+  const tileLayer = useRef<L.TileLayer | null>(null);
+  const [online, setOnline] = useState(() => navigator.onLine);
+  // Whether any tile has loaded or failed (only the first of each matters).
+  const [tiles, setTiles] = useState({ loaded: 0, errors: 0 });
+
+  useEffect(() => {
+    const up = () => {
+      setOnline(true);
+      setTiles({ loaded: 0, errors: 0 });
+      // Leaflet never retries tiles that failed: ask for them again now there's a connection.
+      tileLayer.current?.redraw();
+    };
+    const down = () => setOnline(false);
+    window.addEventListener('online', up);
+    window.addEventListener('offline', down);
+    return () => {
+      window.removeEventListener('online', up);
+      window.removeEventListener('offline', down);
+    };
+  }, []);
   const fitted = useRef(false);
 
   useEffect(() => {
     const m = L.map(box.current!, { zoomControl: false, attributionControl: false });
     L.control.attribution({ prefix: false }).addTo(m);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    tileLayer.current = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap contributors',
-    }).addTo(m);
+    })
+      .on('tileload', () => setTiles((t) => (t.loaded ? t : { ...t, loaded: 1 })))
+      .on('tileerror', () => setTiles((t) => (t.errors ? t : { ...t, errors: 1 })))
+      .addTo(m);
     line.current = L.polyline([], { color: '#3b82f6', weight: 4, opacity: 0.9 }).addTo(m);
     car.current = L.marker([0, 0], { icon: carIcon, interactive: false, keyboard: false });
     m.on('click', () => appStore.set((s) => ({ mapLarge: !s.mapLarge })));
@@ -103,6 +127,11 @@ export function MapCard({ tl }: { tl: Timeline }) {
   return (
     <div className={`card map-card${large ? ' is-large' : ''}`} aria-label="Route map" role="region" title={large ? 'Click to shrink' : 'Click to enlarge'}>
       <div ref={box} className="map-box" />
+      {mapOffline({ online, tilesLoaded: tiles.loaded, tileErrors: tiles.errors }) && (
+        <div className="map-offline" role="status">
+          {MAP_OFFLINE}
+        </div>
+      )}
     </div>
   );
 }

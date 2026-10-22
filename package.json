@@ -1,7 +1,7 @@
 {
   "name": "dashcam-viewer",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,9 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "bun test",
-    "check": "bun run typecheck && bun run lint && bun test && bun run build"
+    "check": "bun run typecheck && bun run lint && bun test && bun run build",
+    "install-app": "bun scripts/install-app.ts",
+    "build-installer": "bun scripts/build-installer.ts"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
