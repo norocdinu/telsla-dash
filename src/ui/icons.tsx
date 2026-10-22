@@ -114,23 +114,15 @@ export const MoreIcon = (p: IconProps) => (
   </Icon>
 );
 
+/** A steering wheel like the car's: a thick rim and a solid hub with three spokes. */
 export const SteeringWheelIcon = (p: IconProps) => (
   <Icon {...p}>
-    <circle cx="12" cy="12" r="8.5" />
-    <circle cx="12" cy="12" r="2.2" />
-    <path d="M3.8 10.5c2.6-.9 5.3-1.3 8.2-1.3s5.6.4 8.2 1.3M12 14.2v6.3" />
-  </Icon>
-);
-
-export const PedalIcon = (p: IconProps) => (
-  <Icon {...p}>
-    <rect x="7.5" y="3.5" width="9" height="17" rx="2.5" />
-  </Icon>
-);
-
-export const BrakePedalIcon = (p: IconProps) => (
-  <Icon {...p}>
-    <rect x="4.5" y="7" width="15" height="10" rx="3" />
+    <circle cx="12" cy="12" r="8.2" strokeWidth={2.4} />
+    <path
+      d="M4.3 11.3Q12 8.6 19.7 11.3V12.7C16.6 12.9 14.7 14.4 14.2 19.9H9.8C9.3 14.4 7.4 12.9 4.3 12.7Z"
+      fill="currentColor"
+      stroke="none"
+    />
   </Icon>
 );
 

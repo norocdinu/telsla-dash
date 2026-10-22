@@ -30,6 +30,11 @@ export function autopilotLabel(a: number): string | null {
   return ({ 1: 'Self Driving', 2: 'Autosteer', 3: 'Traffic-Aware Cruise' } as Record<number, string>)[a] ?? null;
 }
 
+/** Whether the car is steering itself (Self Driving or Autosteer): the wheel icon turns blue, as in the car. */
+export function steeringEngaged(a: number): boolean {
+  return a === 1 || a === 2;
+}
+
 /** `m:ss` under an hour, else `h:mm:ss`. */
 export function formatDuration(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds));

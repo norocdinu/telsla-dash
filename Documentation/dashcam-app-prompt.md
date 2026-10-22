@@ -154,9 +154,9 @@ Reference screenshots, for layout only:
      - The time ticks with playback (`Tue Nov 25, 2025 11:25:00`).
      - Tapping it opens the clip list.
    - **Centre: the driving panel.** Three columns plus a footer strip:
-     - **Left column:** the gear letter in a small circle (D/R in blue, P/N in grey); under it an accelerator-pedal icon that fills with pedal position.
-     - **Centre:** speed as a big number, with the unit (MPH or km/h) under it. A turn-signal arrow sits on each side, green when on and dim grey when off.
-     - **Right column:** a steering-wheel icon that rotates by `steering_wheel_angle`; under it a brake-pedal icon that lights up when `brake_applied`.
+     - **Left column:** the gear letter in a small circle (D/R in blue, P/N in grey); under it an accelerator-pedal icon that fills with pedal position. While pressed, its circle has a blue tint and the fill is blue.
+     - **Centre:** speed as a big number, with the unit (MPH or km/h) under it. A turn-signal arrow sits on each side: it blinks green while the signal is on, as in the car, and stays dim grey when off.
+     - **Right column:** a steering-wheel icon like the car's (thick rim, solid hub with three spokes) that rotates by `steering_wheel_angle`. It turns white on a blue circle while the car steers itself (Self Driving or Autosteer). Under it, a brake-pedal icon: while `brake_applied`, its circle has a red tint and the pedal fills red.
      - **Footer strip:** the driving mode in blue text: "Self Driving", "Autosteer" or "Traffic-Aware Cruise". Hide the strip when the state is NONE.
      - **Labels:** every icon has a text label for screen readers and a tooltip. Nothing relies on colour alone.
    - **Right: "Up next".**
