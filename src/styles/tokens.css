@@ -1,0 +1,51 @@
+:root {
+  --bg: #000;
+  --card: rgba(24, 24, 27, 0.72);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text: #fff;
+  --text-2: #a1a1aa;
+  --sheet: #f4f4f5;
+  --row: #e4e4e7;
+  --sheet-text: #18181b;
+  /* Spec gives #71717a; darkened so small text on the #e4e4e7 rows meets WCAG AA. */
+  --sheet-text-2: #52525b;
+  --red: #e5484d;
+  --red-button: #d93a40;
+  --blue: #3b82f6;
+  --blue-button: #2563eb;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --fs-speed: 40px;
+  --fs-title: 15px;
+  --fs-2: 13px;
+  --radius: 12px;
+  --blur: 12px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-placeholder {
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
