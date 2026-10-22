@@ -4,13 +4,15 @@ export interface Settings {
   units: 'kmh' | 'mph';
   showPanel: boolean;
   showMap: boolean;
+  /** The "Stats for nerds" panel over the video. */
+  showStats: boolean;
   lastView: CameraId | 'grid';
 }
 
 export const SETTINGS_KEY = 'dashcam-viewer.settings';
 
 function defaults(locale: string): Settings {
-  return { units: locale === 'en-US' ? 'mph' : 'kmh', showPanel: true, showMap: true, lastView: 'front' };
+  return { units: locale === 'en-US' ? 'mph' : 'kmh', showPanel: true, showMap: true, showStats: false, lastView: 'front' };
 }
 
 /** Settings are a convenience: any storage problem just gives the defaults. */
@@ -28,6 +30,7 @@ export function loadSettings(locale: string, storage: Pick<Storage, 'getItem'> |
   if (o.units === 'kmh' || o.units === 'mph') s.units = o.units;
   if (typeof o.showPanel === 'boolean') s.showPanel = o.showPanel;
   if (typeof o.showMap === 'boolean') s.showMap = o.showMap;
+  if (typeof o.showStats === 'boolean') s.showStats = o.showStats;
   if (o.lastView === 'grid' || CAMERA_ORDER.includes(o.lastView as CameraId)) s.lastView = o.lastView as Settings['lastView'];
   return s;
 }

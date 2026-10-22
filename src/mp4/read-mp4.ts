@@ -142,10 +142,17 @@ export function frameTimes(info: Mp4Info): Float64Array {
 export async function inspectFile(
   read: (offset: number, length: number) => Promise<Uint8Array>,
   size: number,
-): Promise<{ health: 'mp4' | 'encrypted' | 'damaged'; complete: boolean; codec: string | null; durationS: number | null }> {
+): Promise<{
+  health: 'mp4' | 'encrypted' | 'damaged';
+  complete: boolean;
+  codec: string | null;
+  durationS: number | null;
+  /** How many video frames (samples) the clip has. */
+  frames: number | null;
+}> {
   const head = await read(0, Math.min(HEAD_BYTES, size));
   const health = classifyHead(head, size);
-  const unknown = { health, complete: false, codec: null, durationS: null };
+  const unknown = { health, complete: false, codec: null, durationS: null, frames: null };
   if (health !== 'mp4') return unknown;
   let offset = 0;
   while (offset + 8 <= size) {
@@ -158,7 +165,7 @@ export async function inspectFile(
     if (fourcc(h, 4) === 'moov') {
       try {
         const info = parseMp4(concatFtypMoov(await read(0, 8), await read(offset, boxSize)));
-        return { health, complete: true, codec: info.codec, durationS: info.durationS };
+        return { health, complete: true, codec: info.codec, durationS: info.durationS, frames: info.sizes.length };
       } catch {
         return unknown;
       }

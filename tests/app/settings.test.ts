@@ -5,7 +5,7 @@ const storage = (value: string | null) => ({ getItem: (k: string) => (k === SETT
 
 describe('loadSettings', () => {
   test('US English defaults to mph', () => {
-    expect(loadSettings('en-US', null)).toEqual({ units: 'mph', showPanel: true, showMap: true, lastView: 'front' });
+    expect(loadSettings('en-US', null)).toEqual({ units: 'mph', showPanel: true, showMap: true, showStats: false, lastView: 'front' });
   });
 
   test('other locales default to km/h', () => {
@@ -22,7 +22,16 @@ describe('loadSettings', () => {
   });
 
   test('stored values override only what they set', () => {
-    expect(loadSettings('en-US', storage('{"units":"kmh"}'))).toEqual({ units: 'kmh', showPanel: true, showMap: true, lastView: 'front' });
+    expect(loadSettings('en-US', storage('{"units":"kmh"}'))).toEqual({ units: 'kmh', showPanel: true, showMap: true, showStats: false, lastView: 'front' });
+  });
+
+  test('stats for nerds is off by default', () => {
+    expect(loadSettings('en-US', null).showStats).toBe(false);
+  });
+
+  test('a stored showStats is kept', () => {
+    expect(loadSettings('en-US', storage('{"showStats":true}')).showStats).toBe(true);
+    expect(loadSettings('en-US', storage('{"showStats":"yes"}')).showStats).toBe(false);
   });
 
   test('bad stored values are ignored', () => {
@@ -38,12 +47,12 @@ describe('saveSettings', () => {
         throw new Error('quota');
       },
     };
-    expect(() => saveSettings({ units: 'kmh', showPanel: true, showMap: true, lastView: 'grid' }, broken)).not.toThrow();
+    expect(() => saveSettings({ units: 'kmh', showPanel: true, showMap: true, showStats: false, lastView: 'grid' }, broken)).not.toThrow();
   });
 
   test('writes JSON under the settings key', () => {
     const written: Record<string, string> = {};
-    saveSettings({ units: 'kmh', showPanel: false, showMap: true, lastView: 'back' }, { setItem: (k, v) => (written[k] = v) });
-    expect(JSON.parse(written[SETTINGS_KEY])).toEqual({ units: 'kmh', showPanel: false, showMap: true, lastView: 'back' });
+    saveSettings({ units: 'kmh', showPanel: false, showMap: true, showStats: true, lastView: 'back' }, { setItem: (k, v) => (written[k] = v) });
+    expect(JSON.parse(written[SETTINGS_KEY])).toEqual({ units: 'kmh', showPanel: false, showMap: true, showStats: true, lastView: 'back' });
   });
 });

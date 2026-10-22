@@ -52,6 +52,10 @@ export function SettingsMenu() {
               }}
             />
           </label>
+          <label className="settings-row">
+            <span>Stats for nerds</span>
+            <input type="checkbox" checked={settings.showStats} onChange={(e) => updateSettings({ showStats: e.target.checked })} />
+          </label>
           <button
             type="button"
             className="settings-row settings-action"

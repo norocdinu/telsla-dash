@@ -44,4 +44,10 @@ describe('loading a folder', () => {
     await loadFromSources([clip('RecentClips/2026-10-19_22-08-57-front.mp4')]);
     expect(telemetryCache.failed(f)).toBe(false);
   });
+
+  test('a new drop forgets the chart series of the folder before', async () => {
+    appStore.set({ charts: { 'recent:old': [] } });
+    await loadFromSources([clip('RecentClips/2026-10-19_22-08-57-front.mp4')]);
+    expect(appStore.get().charts).toEqual({});
+  });
 });

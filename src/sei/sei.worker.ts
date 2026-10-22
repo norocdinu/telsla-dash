@@ -5,7 +5,7 @@ import { readClipTelemetry } from './read-clip';
 import type { TelemetryTrack } from './telemetry';
 
 function buffers(t: TelemetryTrack): ArrayBuffer[] {
-  return [t.t, t.has, t.speed, t.pedal, t.steering, t.gear, t.autopilot, t.flags, t.lat, t.lon, t.heading, t.ax, t.ay, t.az].map(
+  return [t.t, t.has, t.speed, t.pedal, t.steering, t.gear, t.autopilot, t.flags, t.lat, t.lon, t.heading, t.ax, t.ay, t.az, t.seq, t.version].map(
     (a) => a.buffer as ArrayBuffer,
   );
 }

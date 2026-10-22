@@ -155,6 +155,17 @@ describe('PlaybackEngine', () => {
     expect(h.active('front').paused).toBe(false);
   });
 
+  test('videoSize reports the active element of a camera, once known', async () => {
+    const h = setup(['front']);
+    h.engine.load(timeline('a', [{ front: 'ok' }]), {});
+    h.engine.setVisible(['front'], 'front');
+    await flush();
+    expect(h.engine.videoSize('front')).toBeNull();
+    Object.assign(h.active('front'), { videoWidth: 2896, videoHeight: 1876 });
+    expect(h.engine.videoSize('front')).toEqual({ width: 2896, height: 1876 });
+    expect(h.engine.videoSize('back')).toBeNull();
+  });
+
   test('loading another timeline reports a missing camera again', async () => {
     const h = setup(['front', 'back']);
     h.engine.setVisible(['front', 'back'], 'front');
