@@ -187,6 +187,12 @@
   min-width: 0;
 }
 
+/* Side cards shrink (text cut with …) rather than slide under the driving panel in a narrow window. */
+.top-left > *,
+.top-right > * {
+  max-width: 100%;
+}
+
 @keyframes cards-in {
   from {
     opacity: 0;
@@ -235,6 +241,8 @@ button.card:hover {
   font-size: var(--fs-2);
   color: var(--text-2);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .upnext-thumb {
@@ -251,6 +259,12 @@ button.card:hover {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+@media (max-width: 820px) {
+  .upnext-thumb {
+    display: none;
+  }
 }
 
 /* --- controls --- */
@@ -511,41 +525,41 @@ button.card:hover {
 
 .drive-panel {
   display: grid;
-  min-width: 248px;
+  min-width: 298px;
   overflow: hidden;
 }
 
 .drive-panel.is-loading {
-  height: 76px;
+  height: 91px;
   place-items: center;
-  padding: 0 32px;
+  padding: 0 38px;
 }
 
 .drive-panel.is-loading .progress-line {
-  width: 120px;
+  width: 144px;
 }
 
 .dp-main {
   display: grid;
   grid-template-columns: auto auto 1fr auto auto;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px 6px;
+  gap: 12px;
+  padding: 10px 14px 7px;
 }
 
 .dp-col {
   display: grid;
-  gap: 6px;
+  gap: 7px;
   justify-items: center;
 }
 
 .dp-gear {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 31px;
+  height: 31px;
   border-radius: 50%;
-  font-size: var(--fs-2);
+  font-size: var(--fs-title);
   font-weight: 700;
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-2);
@@ -559,29 +573,45 @@ button.card:hover {
 .dp-icon {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 31px;
+  height: 31px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-2);
 }
 
 .dp-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
 }
 
+/* Accelerator: blue while pressed, filling with how far. Brake: the same in red. */
 .dp-pedal.is-on {
-  color: #fff;
+  background: rgba(59, 130, 246, 0.25);
+  color: #93b8fb;
+}
+
+.dp-pedal.is-on .dp-pedal-fill {
+  fill: var(--blue);
+}
+
+.dp-brake.is-on {
+  background: rgba(229, 72, 77, 0.25);
+  color: #f2a0a3;
+}
+
+.dp-brake.is-on .dp-pedal-fill {
+  fill: var(--red);
 }
 
 .dp-wheel svg {
   transition: transform 100ms linear;
 }
 
-.dp-brake.is-on {
-  background: rgba(229, 72, 77, 0.25);
-  color: var(--red);
+/* The car is steering itself (Self Driving or Autosteer). */
+.dp-wheel.is-on {
+  background: var(--blue);
+  color: #fff;
 }
 
 .dp-blinker {
@@ -590,18 +620,25 @@ button.card:hover {
 }
 
 .dp-blinker svg {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
 }
 
 .dp-blinker.is-on {
   color: var(--green);
+  animation: dp-blink 0.7s steps(1, end) infinite;
+}
+
+@keyframes dp-blink {
+  50% {
+    color: rgba(255, 255, 255, 0.16);
+  }
 }
 
 .dp-speed {
   display: grid;
   justify-items: center;
-  min-width: 64px;
+  min-width: 77px;
 }
 
 .dp-speed-num {
@@ -611,16 +648,16 @@ button.card:hover {
 }
 
 .dp-unit {
-  font-size: var(--fs-2);
+  font-size: var(--fs-title);
   color: var(--text-2);
   font-weight: 600;
 }
 
 .dp-mode {
-  padding: 4px 12px 6px;
+  padding: 5px 14px 7px;
   border-top: 1px solid var(--card-border);
   text-align: center;
-  font-size: var(--fs-2);
+  font-size: var(--fs-title);
   font-weight: 600;
   color: var(--blue);
 }
