@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import { engine, nextTimeline, openTimeline } from '../../src/app/playback';
+import { engine, nextTimeline, openTimeline, recordSegment } from '../../src/app/playback';
 import { appStore, playStore } from '../../src/app/state';
 import type { SourceFile } from '../../src/library/types';
 import { flush, timeline } from '../helpers/engine-timelines';
 import { avcc, buildMp4 } from '../helpers/mp4-builder';
 import { FakeVideo, installFakeMedia } from '../helpers/fake-video';
+import { makeTrack } from '../helpers/track-builder';
 
 installFakeMedia();
 
@@ -54,5 +55,14 @@ describe('playback wiring', () => {
     openTimeline(a.id, undefined, true);
     await flush();
     expect(playStore.get().playing).toBe(true);
+  });
+
+  test('a scanned minute stores its chart series next to its moments and route', () => {
+    recordSegment(b, 1, makeTrack(72, 36));
+    const charts = appStore.get().charts[b.id];
+    expect(charts[0]).toBeUndefined();
+    expect(charts[1]?.stepS).toBe(0.1);
+    expect(charts[1]?.speed.length).toBe(20);
+    expect(appStore.get().route[b.id]?.[1]).toBeDefined();
   });
 });

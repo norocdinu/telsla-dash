@@ -91,6 +91,14 @@ export const MapIcon = (p: IconProps) => (
   </Icon>
 );
 
+/** Stats for nerds: a small line chart. */
+export const StatsIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 4.5v15h16" />
+    <path d="m7 15 3.5-4.5 3 2.5L19 7" />
+  </Icon>
+);
+
 export const GridIcon = (p: IconProps) => (
   <Icon {...p}>
     <rect x="4" y="4" width="7" height="7" rx="1.5" />

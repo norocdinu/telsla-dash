@@ -80,7 +80,12 @@ export async function deleteTimelines(
   const library = removeTimelines(s.library ?? { timelines: [], ignored: 0 }, results);
   const kept = new Set(library.timelines.map((t) => t.id));
   const gone = new Set([...deleting].filter((id) => !kept.has(id)));
-  const tidy = { moments: without(s.moments, gone), route: without(s.route, gone), health: without(s.health, gone) };
+  const tidy = {
+    moments: without(s.moments, gone),
+    route: without(s.route, gone),
+    charts: without(s.charts, gone),
+    health: without(s.health, gone),
+  };
 
   if (!library.timelines.length) {
     appStore.set({ ...tidy, library: null, timelineId: null, listOpen: false });

@@ -232,6 +232,7 @@ Keep it to:
 - **Units:** km/h or mph. The default follows the browser locale (en-US → mph, otherwise km/h).
 - **Show driving panel:** on or off.
 - **Map:** on or off.
+- **Stats for nerds:** on or off (off by default). A see-through panel down the right of the video with every recorded value and charts of the clip; see `Documentation/2026-10-22-stats-for-nerds-design.md`.
 - **Manage events…:** opens the clear-out screen (delete by type, reason and age).
 
 Store these in `localStorage`, wrapped in try/catch, with the app working without it.
@@ -286,12 +287,13 @@ Every message says what happened and what to do, in plain words:
   - E: Jump to Event
   - L: clip list
   - M: map
+  - S: Stats for nerds
   - Show the shortcuts in a tooltip on the ⋯ menu.
 
 ## Not now (later phases, don't build)
 - Export a moment as a video with the driving panel burned in.
 - One-page PDF incident report (stills, map, numbers).
-- Speed / g-force graph under the scrubber.
+- ~~Speed / g-force graph under the scrubber.~~ Replaced by Stats for nerds (see Settings).
 - Trip statistics across days.
 - Installable offline app (PWA).
 - Decrypting encrypted clips (needs Tesla's account keys; point users to dashcam.tesla.com instead).

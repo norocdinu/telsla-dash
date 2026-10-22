@@ -28,6 +28,8 @@ export class FakeVideo extends EventTarget {
   defaultPlaybackRate = 1;
   readyState = 0;
   duration = NaN;
+  videoWidth = 0;
+  videoHeight = 0;
   paused = true;
   ended = false;
   error: { code: number } | null = null;

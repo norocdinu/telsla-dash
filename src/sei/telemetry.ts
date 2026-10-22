@@ -19,6 +19,10 @@ export interface TelemetryTrack {
   ax: Float32Array;
   ay: Float32Array;
   az: Float32Array;
+  /** The car's own frame counter (`frame_seq_no`, a uint64; exact up to 2^53). */
+  seq: Float64Array;
+  /** The driving-data format version (`version`). */
+  version: Uint32Array;
   durationS: number;
   codec: string;
 }
@@ -38,6 +42,8 @@ export interface FrameTelemetry {
   ax: number;
   ay: number;
   az: number;
+  seq: number;
+  version: number;
 }
 
 export const BLINK_LEFT = 1;
@@ -61,6 +67,8 @@ export function emptyTrack(t: Float64Array, durationS: number, codec: string): T
     ax: new Float32Array(n),
     ay: new Float32Array(n),
     az: new Float32Array(n),
+    seq: new Float64Array(n),
+    version: new Uint32Array(n),
     durationS,
     codec,
   };
@@ -109,6 +117,8 @@ export function extractTelemetry(buf: Uint8Array): TelemetryTrack {
     track.ax[i] = m.linearAccelerationMps2X as number;
     track.ay[i] = m.linearAccelerationMps2Y as number;
     track.az[i] = m.linearAccelerationMps2Z as number;
+    track.seq[i] = m.frameSeqNo as number;
+    track.version[i] = m.version as number;
   }
   return track;
 }
@@ -150,5 +160,7 @@ export function telemetryAt(track: TelemetryTrack, t: number): FrameTelemetry | 
     ax: track.ax[i],
     ay: track.ay[i],
     az: track.az[i],
+    seq: track.seq[i],
+    version: track.version[i],
   };
 }
