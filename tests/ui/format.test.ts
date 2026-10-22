@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { autopilotLabel, formatDuration, gearLetter, gearTone, speedValue, unitLabel } from '../../src/ui/format';
+import { autopilotLabel, formatDuration, gearLetter, gearTone, speedValue, steeringEngaged, unitLabel } from '../../src/ui/format';
 
 describe('speed', () => {
   test('converts metres per second to the chosen unit, rounded', () => {
@@ -26,6 +26,12 @@ describe('gear', () => {
 describe('autopilotLabel', () => {
   test('names each engaged state, nothing when off', () => {
     expect([0, 1, 2, 3].map(autopilotLabel)).toEqual([null, 'Self Driving', 'Autosteer', 'Traffic-Aware Cruise']);
+  });
+});
+
+describe('steeringEngaged', () => {
+  test('the car steers itself with Self Driving or Autosteer, not with cruise alone', () => {
+    expect([0, 1, 2, 3].map(steeringEngaged)).toEqual([false, true, true, false]);
   });
 });
 
