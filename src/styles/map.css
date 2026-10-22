@@ -1,0 +1,53 @@
+/* Map card: floats bottom-right above the controls. */
+
+.map-card {
+  position: absolute;
+  right: 12px;
+  bottom: 108px;
+  z-index: 3;
+  width: 280px;
+  height: 180px;
+  padding: 0;
+  overflow: hidden;
+  transition: width 200ms ease, height 200ms ease;
+  animation: cards-in 180ms ease-out;
+}
+
+.map-card.is-large {
+  width: min(50%, calc(100% - 24px));
+  height: min(50%, calc(100% - 200px));
+}
+
+.map-box {
+  width: 100%;
+  height: 100%;
+  background: #1c1c1f;
+  cursor: pointer;
+}
+
+.map-box .leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.map-car {
+  background: none;
+  border: 0;
+}
+
+.map-car-arrow {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin: -2px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  transition: transform 150ms linear;
+}
+
+.map-car-arrow svg {
+  width: 18px;
+  height: 18px;
+}
