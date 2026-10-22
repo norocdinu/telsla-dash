@@ -1,8 +1,8 @@
 import { NO_DATA, NO_DATA_WHY } from '../../app/messages';
 import { appStore, playStore } from '../../app/state';
 import { useStore } from '../../app/store';
-import { autopilotLabel, gearLetter, gearTone, speedValue, unitLabel } from '../format';
-import { ArrowLeftIcon, ArrowRightIcon, BrakePedalIcon, SteeringWheelIcon } from '../icons';
+import { autopilotLabel, gearLetter, gearTone, speedValue, steeringEngaged, unitLabel } from '../format';
+import { ArrowLeftIcon, ArrowRightIcon, SteeringWheelIcon } from '../icons';
 
 function steeringText(deg: number): string {
   const a = Math.round(Math.abs(deg));
@@ -18,6 +18,16 @@ function Pedal({ percent }: { percent: number }) {
     <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
       <rect x="8" y="4" width="8" height="16" rx="2.4" fill="none" stroke="currentColor" strokeWidth="1.6" />
       <rect x="9" y={19.5 - h} width="6" height={h} rx="1.4" fill="currentColor" className="dp-pedal-fill" />
+    </svg>
+  );
+}
+
+/** Brake pedal outline, filled while the brake is on. */
+function BrakePedal({ on }: { on: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+      <rect x="4.5" y="7" width="15" height="10" rx="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      {on && <rect x="6" y="8.5" width="12" height="7" rx="1.8" fill="currentColor" className="dp-pedal-fill" />}
     </svg>
   );
 }
@@ -77,11 +87,11 @@ export function DrivingPanel() {
           <ArrowRightIcon />
         </span>
         <div className="dp-col">
-          <span className="dp-icon dp-wheel" role="img" aria-label={steer} title={steer}>
+          <span className={`dp-icon dp-wheel${steeringEngaged(frame.autopilot) ? ' is-on' : ''}`} role="img" aria-label={steer} title={steer}>
             <SteeringWheelIcon style={{ transform: `rotate(${frame.steeringDeg}deg)` }} />
           </span>
           <span className={`dp-icon dp-brake${frame.brake ? ' is-on' : ''}`} role="img" aria-label={brake} title={brake}>
-            <BrakePedalIcon />
+            <BrakePedal on={frame.brake} />
           </span>
         </div>
       </div>
