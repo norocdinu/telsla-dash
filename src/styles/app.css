@@ -207,3 +207,132 @@ input:focus-visible {
     animation: none !important;
   }
 }
+
+/* --- confirm dialog and messages --- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  animation: fade-in 150ms ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.modal {
+  width: min(440px, 100%);
+  padding: 24px;
+  border-radius: 16px;
+  background: #fff;
+  color: var(--sheet-text);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  color-scheme: light;
+}
+
+.modal-title {
+  margin: 0 0 12px;
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.modal-body p {
+  margin: 0 0 8px;
+  color: var(--sheet-text-2);
+  font-size: var(--fs-title);
+  line-height: 1.45;
+}
+
+.modal-body .modal-what {
+  color: var(--sheet-text);
+  font-weight: 600;
+}
+
+.modal-body .modal-note {
+  font-size: var(--fs-2);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-quiet {
+  background: var(--row);
+  color: var(--sheet-text);
+}
+
+.btn-quiet:hover {
+  background: #d4d4d8;
+}
+
+.btn-danger {
+  background: var(--red-button);
+  color: #fff;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c5333a;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 210;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100% - 32px);
+  padding: 10px 10px 10px 16px;
+  border-radius: 12px;
+  background: #18181b;
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  font-size: var(--fs-title);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  animation: fade-in 150ms ease-out;
+}
+
+.toast-text {
+  min-width: 0;
+}
+
+.toast-list {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-2);
+  font-size: var(--fs-2);
+}
+
+.toast-close {
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.is-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

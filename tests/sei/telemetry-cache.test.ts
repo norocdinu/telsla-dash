@@ -59,6 +59,21 @@ describe('TelemetryCache', () => {
     expect(cache.failed(a)).toBe(false);
   });
 
+  test('forget drops tracks and remembered failures for those files', async () => {
+    let fail = true;
+    const cache = new TelemetryCache(async () => {
+      if (fail) throw new Error('boom');
+      return makeTrack(3, 36);
+    });
+    const [a, b] = ['a.mp4', 'b.mp4'].map((p) => fakeSource(p));
+    await cache.get(a).catch(() => undefined);
+    fail = false;
+    await cache.get(b);
+    cache.forget([a.path, b.path]);
+    expect(cache.failed(a)).toBe(false);
+    expect(cache.peek(b)).toBeUndefined();
+  });
+
   test('failed loads are retried on the next get', async () => {
     let calls = 0;
     const cache = new TelemetryCache(async () => {

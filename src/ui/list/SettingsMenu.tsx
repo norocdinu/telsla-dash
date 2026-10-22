@@ -52,6 +52,16 @@ export function SettingsMenu() {
               }}
             />
           </label>
+          <button
+            type="button"
+            className="settings-row settings-action"
+            onClick={() => {
+              setOpen(false);
+              appStore.set({ manageOpen: true, listOpen: false });
+            }}
+          >
+            Manage events…
+          </button>
           <div className="settings-shortcuts">
             {SHORTCUTS.map((s) => (
               <div key={s.key}>

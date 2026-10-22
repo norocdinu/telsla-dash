@@ -307,3 +307,48 @@
   font: 600 11px var(--font);
   color: var(--sheet-text);
 }
+
+/* --- delete on a row --- */
+
+.clip-row-wrap {
+  position: relative;
+}
+
+.row-trash {
+  position: absolute;
+  right: 8px;
+  top: calc(50% + 2px);
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--sheet-text-2);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms ease, color 150ms ease;
+}
+
+.clip-row-wrap:hover .row-trash,
+.row-trash:focus-visible {
+  opacity: 1;
+}
+
+.row-trash:hover:not(.is-disabled) {
+  color: var(--red-button);
+}
+
+.clip-row-wrap:hover .row-trash.is-disabled,
+.row-trash.is-disabled:focus-visible {
+  opacity: 0.35;
+}
+
+/* Touch screens have no hover: always show it. */
+@media (hover: none) {
+  .row-trash {
+    opacity: 1;
+  }
+}

@@ -29,8 +29,11 @@ export function useGlobalDrop(): boolean {
       e.preventDefault();
       depth = 0;
       setOver(false);
-      const nodes = e.dataTransfer ? fromDataTransfer(e.dataTransfer.items) : [];
-      if (nodes.length) void loadFromNodes(nodes);
+      if (!e.dataTransfer) return;
+      // fromDataTransfer reads the items now, inside the event; the handles resolve afterwards.
+      void fromDataTransfer(e.dataTransfer.items).then((nodes) => {
+        if (nodes.length) void loadFromNodes(nodes);
+      });
     };
     window.addEventListener('dragenter', enter);
     window.addEventListener('dragover', overFn);

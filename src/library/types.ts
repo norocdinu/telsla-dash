@@ -1,3 +1,5 @@
+import type { FileLocation } from '../delete/types';
+
 export type CameraId = 'front' | 'back' | 'left_repeater' | 'right_repeater' | 'left_pillar' | 'right_pillar';
 
 export const CAMERA_ORDER: CameraId[] = ['front', 'back', 'left_repeater', 'right_repeater', 'left_pillar', 'right_pillar'];
@@ -17,6 +19,8 @@ export interface SourceFile {
   name: string;
   size: number | null;
   getFile(): Promise<File>;
+  /** Where it lives, when the browser lets the app delete it (folder opened with edit-capable handles). */
+  loc?: FileLocation;
 }
 
 /** One recorded minute: the same timestamp across camera files in one folder. */

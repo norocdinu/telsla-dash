@@ -145,3 +145,10 @@ export const ArrowRightIcon = (p: IconProps) => (
     <path d="M13.5 5 20 12l-6.5 7v-4.2H4V9.2h9.5z" fill="currentColor" stroke="none" />
   </Icon>
 );
+
+export const TrashIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4.5 6.5h15M9.5 6.5V4.8c0-.7.5-1.3 1.2-1.3h2.6c.7 0 1.2.6 1.2 1.3v1.7" />
+    <path d="M6.5 6.5 7.4 19c.1.9.8 1.5 1.6 1.5h6c.9 0 1.6-.6 1.6-1.5l.9-12.5M10 10.5v6M14 10.5v6" />
+  </Icon>
+);
