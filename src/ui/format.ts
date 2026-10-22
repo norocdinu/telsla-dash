@@ -10,8 +10,12 @@ export type Units = 'kmh' | 'mph';
 
 const MPS_TO = { kmh: 3.6, mph: 2.2369363 };
 
+export function speedExact(mps: number, units: Units): number {
+  return mps * MPS_TO[units];
+}
+
 export function speedValue(mps: number, units: Units): number {
-  return Math.round(mps * MPS_TO[units]);
+  return Math.round(speedExact(mps, units));
 }
 
 export function unitLabel(units: Units): 'km/h' | 'MPH' {
@@ -28,6 +32,11 @@ export function gearTone(g: number): 'blue' | 'grey' {
 
 export function autopilotLabel(a: number): string | null {
   return ({ 1: 'Self Driving', 2: 'Autosteer', 3: 'Traffic-Aware Cruise' } as Record<number, string>)[a] ?? null;
+}
+
+/** The steering angle in whole degrees, rounding its size like the driving panel does (−2.5 → −3), side kept. */
+export function steeringWhole(deg: number): number {
+  return Math.sign(deg) * Math.round(Math.abs(deg)) || 0;
 }
 
 /** Whether the car is steering itself (Self Driving or Autosteer): the wheel icon turns blue, as in the car. */

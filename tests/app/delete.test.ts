@@ -58,6 +58,7 @@ beforeEach(async () => {
 
 describe('deleteTimelines', () => {
   test('deleting the clip being watched plays the next one in the filter', async () => {
+    appStore.set((st) => ({ charts: { ...st.charts, [h1.id]: [] } }));
     await deleteTimelines([h1.id], 'player', () => undefined, never);
     await flush();
     const s = appStore.get();
@@ -65,6 +66,7 @@ describe('deleteTimelines', () => {
     expect(currentTimeline()?.id).toBe(h2.id);
     expect(playStore.get().playing).toBe(true);
     expect(s.listOpen).toBe(false);
+    expect(s.charts[h1.id]).toBeUndefined();
   });
 
   test('from the clip list, the list stays open', async () => {

@@ -16,6 +16,8 @@ export interface Raw {
   ax: number;
   ay: number;
   az: number;
+  seq: number;
+  version: number;
 }
 
 /** A synthetic track of `n` frames at `fps`. Defaults: has 1, speed 10 m/s, everything else 0. */
@@ -39,6 +41,8 @@ export function makeTrack(n: number, fps: number, at: (i: number) => Partial<Raw
       ax: 0,
       ay: 0,
       az: 0,
+      seq: 0,
+      version: 0,
       ...at(i),
     };
     tr.has[i] = r.has;
@@ -54,6 +58,8 @@ export function makeTrack(n: number, fps: number, at: (i: number) => Partial<Raw
     tr.ax[i] = r.ax;
     tr.ay[i] = r.ay;
     tr.az[i] = r.az;
+    tr.seq[i] = r.seq;
+    tr.version[i] = r.version;
   }
   return tr;
 }

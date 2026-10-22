@@ -1,4 +1,6 @@
 import { CAMERA_ORDER, type Segment, type SourceFile, type Timeline } from '../library/types';
+import type { Span } from '../player/timeline-math';
+import type { TimeWindow } from '../stats/window';
 import { TelemetryLoadError, type LoadFailure } from './errors';
 import type { TelemetryTrack } from './telemetry';
 import type { TelemetryCache } from './telemetry-cache';
@@ -32,15 +34,37 @@ export function segmentSource(seg: Segment): SourceFile | null {
   return null;
 }
 
-/** Loads each segment's driving data one at a time, nearest the playhead first. */
+/**
+ * Moves the segments a window shows (the zoomed charts' 30 s) that are still waiting in `queue` to its front: the
+ * one at `wallMs` first, then the others nearest first. A running scan reads its queue as it goes, so this
+ * reorders it.
+ */
+export function prioritise(queue: number[], spans: Span[], wallMs: number, w: TimeWindow): void {
+  const from = w.fromMs;
+  const to = w.toMs;
+  const distance = (s: Span) => Math.max(0, s.startMs - wallMs, wallMs - (s.startMs + s.durationS * 1000));
+  const near = spans
+    .filter((s) => s.startMs < to && s.startMs + s.durationS * 1000 > from && queue.includes(s.index))
+    .sort((a, b) => distance(a) - distance(b))
+    .map((s) => s.index);
+  if (!near.length) return;
+  const rest = queue.filter((i) => !near.includes(i));
+  queue.splice(0, queue.length, ...near, ...rest);
+}
+
+/**
+ * Loads each segment's driving data one at a time, nearest the playhead first (`start`), or in the order of a
+ * queue it reads as it goes, so a caller can reprioritise it (see prioritise).
+ */
 export async function scanTimeline(
   tl: Timeline,
   get: (f: SourceFile) => Promise<TelemetryTrack>,
   onSegment: (index: number, track: TelemetryTrack | null, error?: LoadFailure) => void,
   signal: AbortSignal,
-  start = 0,
+  start: number | number[] = 0,
 ): Promise<void> {
-  for (const i of scanOrder(tl.segments.length, start)) {
+  const queue = Array.isArray(start) ? start : scanOrder(tl.segments.length, start);
+  for (let i = queue.shift(); i !== undefined; i = queue.shift()) {
     if (signal.aborted) return;
     const f = segmentSource(tl.segments[i]);
     if (!f) continue;

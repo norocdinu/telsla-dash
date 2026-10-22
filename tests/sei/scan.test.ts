@@ -2,7 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { buildLibrary } from '../../src/library/build-library';
 import type { SourceFile } from '../../src/library/types';
 import { TelemetryLoadError } from '../../src/sei/errors';
-import { scanLoader, scanOrder, scanTimeline, segmentSource } from '../../src/sei/scan';
+import type { Span } from '../../src/player/timeline-math';
+import { prioritise, scanLoader, scanOrder, scanTimeline, segmentSource } from '../../src/sei/scan';
 import { TelemetryCache } from '../../src/sei/telemetry-cache';
 import { cameraFiles, fakeSource } from '../helpers/sources';
 import { makeTrack } from '../helpers/track-builder';
@@ -85,3 +86,45 @@ describe('scanTimeline', () => {
     ]);
   });
 });
+
+describe('scan queue', () => {
+  test('reads indices put at the front of its queue while it runs', async () => {
+    const queue = [0, 1, 2, 3, 4];
+    const seen: number[] = [];
+    await scanTimeline(
+      timeline(),
+      async () => makeTrack(3, 36),
+      (i) => {
+        seen.push(i);
+        if (i === 0) prioritise(queue, spans(5), 3 * 60_000 + 5_000, { fromMs: 3 * 60_000 - 10_000, toMs: 3 * 60_000 + 20_000 });
+      },
+      new AbortController().signal,
+      queue,
+    );
+    expect(seen).toEqual([0, 3, 2, 1, 4]);
+  });
+
+  test('prioritise puts the minute at a time first, then the others in the window', () => {
+    const queue = [2, 3, 4];
+    prioritise(queue, spans(5), 3 * 60_000 + 5_000, { fromMs: 3 * 60_000 - 10_000, toMs: 3 * 60_000 + 20_000 });
+    expect(queue).toEqual([3, 2, 4]);
+  });
+
+  test('prioritise leaves the queue alone when nothing near is waiting', () => {
+    const queue = [4];
+    prioritise(queue, spans(5), 60_000 + 30_000, { fromMs: 75_000, toMs: 105_000 });
+    expect(queue).toEqual([4]);
+  });
+
+  test('near the end, the minute the clamped 30 s window still shows is read too', () => {
+    // A 20 s last minute: paused 2 s before the end, the chart shows 110–140 s, which reaches into minute 1.
+    const short: Span[] = [...spans(2), { index: 2, startMs: 120_000, durationS: 20 }];
+    const queue = [0, 1, 2];
+    prioritise(queue, short, 138_000, { fromMs: 110_000, toMs: 140_000 });
+    expect(queue).toEqual([2, 1, 0]);
+  });
+});
+
+function spans(count: number): Span[] {
+  return Array.from({ length: count }, (_, i) => ({ index: i, startMs: i * 60_000, durationS: 60 }));
+}

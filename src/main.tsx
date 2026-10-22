@@ -7,6 +7,7 @@ import './styles/player.css';
 import './styles/list.css';
 import './styles/map.css';
 import './styles/manage.css';
+import './styles/stats.css';
 import { App } from './ui/App';
 
 createRoot(document.getElementById('root')!).render(

@@ -77,17 +77,17 @@ describe('inspectFile', () => {
 
   test('a whole MP4 is complete, with its codec', async () => {
     const buf = buildMp4({ samples: big, durations: [270, 263, 278], codec: 'hvc1' });
-    expect(await inspectFile(reader(buf), buf.length)).toEqual({ health: 'mp4', complete: true, codec: 'hvc1', durationS: 0.0811 });
+    expect(await inspectFile(reader(buf), buf.length)).toEqual({ health: 'mp4', complete: true, codec: 'hvc1', durationS: 0.0811, frames: 3 });
   });
 
   test('a cut-off MP4 is incomplete', async () => {
     const buf = buildMp4({ samples: big, durations: [1, 1, 1] }).slice(0, -50);
-    expect(await inspectFile(reader(buf), buf.length)).toEqual({ health: 'mp4', complete: false, codec: null, durationS: null });
+    expect(await inspectFile(reader(buf), buf.length)).toEqual({ health: 'mp4', complete: false, codec: null, durationS: null, frames: null });
   });
 
   test('non-MP4 bytes keep their head classification', async () => {
     const buf = randomBytes(HEAD_BYTES);
-    expect(await inspectFile(reader(buf), 2_000_000)).toEqual({ health: 'encrypted', complete: false, codec: null, durationS: null });
+    expect(await inspectFile(reader(buf), 2_000_000)).toEqual({ health: 'encrypted', complete: false, codec: null, durationS: null, frames: null });
   });
 });
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { extractTelemetry, frameIndexAt, telemetryAt } from '../../src/sei/telemetry';
 import { avcc, buildMp4 } from '../helpers/mp4-builder';
+import { makeTrack } from '../helpers/track-builder';
 import { picture, seiNal } from '../helpers/sei-builder';
 
 const f = { vehicleSpeedMps: 15.5, gearState: 1, autopilotState: 2, blinkerOnRight: true, brakeApplied: true, latitudeDeg: 10.5 };
@@ -39,6 +40,14 @@ describe('extractTelemetry', () => {
     expect(tr.flags[0]).toBe(0b110);
   });
 
+  test('decodes the frame number and data version', () => {
+    const tr = extractTelemetry(
+      buildMp4({ samples: [avcc(seiNal({ ...f, version: 1, frameSeqNo: 123456789012 }), picture(5))], durations: [277], codec: 'avc1' }),
+    );
+    expect(tr.seq[0]).toBe(123456789012);
+    expect(tr.version[0]).toBe(1);
+  });
+
   test('tracks of other codecs have no driving data', () => {
     expect([...track('hvc1').has]).toEqual([0, 0, 0, 0]);
   });
@@ -57,6 +66,11 @@ describe('frameIndexAt', () => {
 describe('telemetryAt', () => {
   test('is null on a frame without data', () => {
     expect(telemetryAt(track(), 0.06)).toBeNull();
+  });
+
+  test('reports the frame number and version', () => {
+    const tr = makeTrack(3, 36, (i) => ({ seq: 100 + i, version: 2 }));
+    expect(telemetryAt(tr, 1 / 36)).toMatchObject({ seq: 101, version: 2 });
   });
 
   test('returns the frame values', () => {

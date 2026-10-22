@@ -3,10 +3,12 @@ import type { CameraId, Segment, Timeline } from '../library/types';
 import { detectMoments, eventMoment, mergeMoments, type Moment } from '../moments/detect';
 import { JUMP_LEAD_S } from '../moments/thresholds';
 import { PlaybackEngine } from '../player/engine';
-import { locate, buildSpans } from '../player/timeline-math';
+import { bounds, locate, buildSpans } from '../player/timeline-math';
 import { routePoints } from '../sei/route';
-import { scanLoader, scanTimeline, segmentSource } from '../sei/scan';
-import { telemetryAt } from '../sei/telemetry';
+import { prioritise, scanLoader, scanOrder, scanTimeline, segmentSource } from '../sei/scan';
+import { telemetryAt, type TelemetryTrack } from '../sei/telemetry';
+import { compactSeries } from '../stats/series';
+import { chartWindow } from '../stats/window';
 import { loadTelemetryInWorker } from '../sei/telemetry-client';
 import { nextInList } from '../ui/list/list-model';
 import { measureDurations, readSegmentDuration } from './durations';
@@ -50,6 +52,8 @@ export const engine = new PlaybackEngine({
 
 let loadedId: string | null = null;
 let scanAbort: AbortController | null = null;
+/** The running scan's queue of segment indices still to read (see scanNear). */
+let scanQueue: number[] = [];
 let measureAbort: AbortController | null = null;
 let pendingStart: number | undefined;
 let pendingPlay = false;
@@ -59,27 +63,35 @@ function addMoments(s: AppState, id: string, found: Moment[]): Partial<AppState>
   return { moments: { ...s.moments, [id]: mergeMoments([...(s.moments[id] ?? []), ...found]) } };
 }
 
+/** What one scanned minute adds: its moments, its route points and its Stats for nerds chart series. */
+export function recordSegment(tl: Timeline, i: number, track: TelemetryTrack): void {
+  const found = detectMoments(track, tl.segments[i].wallMs);
+  const points = routePoints(track);
+  const chart = compactSeries(track);
+  appStore.set((s) => {
+    const route = [...(s.route[tl.id] ?? [])];
+    route[i] = points;
+    const charts = [...(s.charts[tl.id] ?? [])];
+    charts[i] = chart;
+    return { ...addMoments(s, tl.id, found), route: { ...s.route, [tl.id]: route }, charts: { ...s.charts, [tl.id]: charts } };
+  });
+}
+
 function startScan(tl: Timeline, startIndex: number): void {
   scanAbort?.abort();
   const ac = new AbortController();
   scanAbort = ac;
-  void scanTimeline(
-    tl,
-    scanLoad,
-    (i, track) => {
-      if (!track) return;
-      const seg = tl.segments[i];
-      const found = detectMoments(track, seg.wallMs);
-      const points = routePoints(track);
-      appStore.set((s) => {
-        const route = [...(s.route[tl.id] ?? [])];
-        route[i] = points;
-        return { ...addMoments(s, tl.id, found), route: { ...s.route, [tl.id]: route } };
-      });
-    },
-    ac.signal,
-    startIndex,
-  );
+  scanQueue = scanOrder(tl.segments.length, startIndex);
+  void scanTimeline(tl, scanLoad, (i, track) => track && recordSegment(tl, i, track), ac.signal, scanQueue);
+}
+
+/** Reads the minutes the zoomed Stats for nerds charts show (paused at a time) next, if they're still waiting. */
+export function scanNear(wallMs: number): void {
+  const s = appStore.get();
+  const tl = currentTimeline(s);
+  if (!tl || tl.id !== loadedId) return;
+  const spans = buildSpans(tl.segments, s.durations);
+  prioritise(scanQueue, spans, wallMs, chartWindow(bounds(spans), wallMs, true));
 }
 
 function onAppChange(): void {
@@ -158,6 +170,11 @@ export function setView(view: { main: CameraId; grid: boolean }): void {
 
 export function seekLead(wallMs: number): void {
   engine.seek(wallMs - JUMP_LEAD_S * 1000);
+}
+
+/** Opens or closes Stats for nerds (S, the Settings switch, the panel's ×); remembered like other settings. */
+export function toggleStats(): void {
+  updateSettings({ showStats: !appStore.get().settings.showStats });
 }
 
 export function jumpToEvent(): void {

@@ -3,6 +3,7 @@ import type { Moment } from '../moments/detect';
 import type { SlotStatus } from '../player/engine';
 import type { LatLon } from '../sei/route';
 import { TelemetryCache } from '../sei/telemetry-cache';
+import type { ChartMinute } from '../stats/series';
 import { loadTelemetryInWorker } from '../sei/telemetry-client';
 import type { FrameTelemetry } from '../sei/telemetry';
 import type { ListTab } from '../ui/list/list-model';
@@ -30,6 +31,8 @@ export interface AppState {
   moments: Record<string, Moment[]>;
   /** Per timeline id, per segment index. */
   route: Record<string, (LatLon[] | undefined)[]>;
+  /** Stats for nerds chart series, per timeline id, per segment index. */
+  charts: Record<string, (ChartMinute | undefined)[]>;
   /** Per segment key, in seconds. */
   durations: Record<string, number>;
   slots: Partial<Record<CameraId, SlotStatus>>;
@@ -66,6 +69,7 @@ export const appStore = createStore<AppState>({
   health: {},
   moments: {},
   route: {},
+  charts: {},
   durations: {},
   slots: {},
   settings: initialSettings,
