@@ -165,6 +165,21 @@ export class PlaybackEngine {
     this.emitState();
   }
 
+  /**
+   * Lets go of every file (e.g. before deleting them: Windows won't delete a file that is still open).
+   * Slots stay attached, so a later load() plays as usual.
+   */
+  release(): void {
+    this.pause();
+    this.frameToken++;
+    for (const slot of this.slots.values()) {
+      for (const i of [0, 1] as const) this.unload(slot, i);
+      slot.status = 'ok';
+    }
+    this.urls.releaseAll();
+    this.tl = null;
+  }
+
   destroy(): void {
     if (this.syncTimer) clearInterval(this.syncTimer);
     this.frameToken++;

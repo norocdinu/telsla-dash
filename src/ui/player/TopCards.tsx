@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { RECENT_PLACE } from '../../app/messages';
 import { nextTimeline, openTimeline } from '../../app/playback';
 import { appStore, playStore } from '../../app/state';
 import { useStore } from '../../app/store';
@@ -7,11 +6,8 @@ import { formatWall } from '../../library/time';
 import type { Timeline } from '../../library/types';
 import { segmentSource } from '../../sei/scan';
 import { ListIcon, SkipNextIcon } from '../icons';
+import { placeOf } from '../format';
 import { captureFrame, imageUrl } from '../thumbs';
-
-export function placeOf(tl: Timeline): string {
-  return tl.event?.city ?? RECENT_PLACE;
-}
 
 export function useThumb(tl: Timeline | null): string | null {
   const [url, setUrl] = useState<{ id: string; url: string } | null>(null);

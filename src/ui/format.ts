@@ -1,3 +1,11 @@
+import { RECENT_PLACE } from '../app/messages';
+import type { Timeline } from '../library/types';
+
+/** Where a clip was recorded: the event's city, else "Recent drive". */
+export function placeOf(tl: Timeline): string {
+  return tl.event?.city ?? RECENT_PLACE;
+}
+
 export type Units = 'kmh' | 'mph';
 
 const MPS_TO = { kmh: 3.6, mph: 2.2369363 };

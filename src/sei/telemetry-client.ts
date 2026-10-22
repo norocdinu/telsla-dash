@@ -36,6 +36,11 @@ function getWorker(): Worker {
 /** One clip file is read at a time, so the worker never holds several 80 MB files at once. */
 const oneAtATime = createSerial();
 
+/** Resolves when no clip file is being read for driving data. */
+export function telemetryIdle(): Promise<void> {
+  return oneAtATime.idle();
+}
+
 /** Reads a clip's driving data in the shared worker. Encrypted or damaged files fail fast. */
 export async function loadTelemetryInWorker(file: SourceFile): Promise<TelemetryTrack> {
   const health = await readHealth(file);

@@ -4,6 +4,7 @@ import { useStore } from '../../app/store';
 import type { Timeline } from '../../library/types';
 import { segmentSource } from '../../sei/scan';
 import { frameIndexAt } from '../../sei/telemetry';
+import { DeleteButton } from '../DeleteButton';
 import { ClipList } from '../list/ClipList';
 import { CameraStrip } from './CameraStrip';
 import { Controls } from './Controls';
@@ -36,7 +37,15 @@ export function Player() {
       <div className="stage">
         <VideoStage tl={tl} />
         <TopCards tl={tl} center={<DrivingPanel />} />
-        <Controls tl={tl} right={<MapToggle tl={tl} />} />
+        <Controls
+          tl={tl}
+          right={
+            <>
+              <MapToggle tl={tl} />
+              <DeleteButton id={tl.id} origin="player" className="icon-btn" label="Delete this clip" />
+            </>
+          }
+        />
         {mapOpen && <MapSlot tl={tl} />}
       </div>
       <CameraStrip tl={tl} />

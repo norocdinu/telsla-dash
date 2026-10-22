@@ -21,6 +21,20 @@ describe('createSerial', () => {
     expect(most).toBe(1);
   });
 
+  test('idle resolves once every queued job is done', async () => {
+    const run = createSerial();
+    const done: number[] = [];
+    void run(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+      done.push(1);
+    });
+    void run(async () => {
+      done.push(2);
+    });
+    await run.idle();
+    expect(done).toEqual([1, 2]);
+  });
+
   test('a failing job does not stop the next one', async () => {
     const run = createSerial();
     const failed = run(async () => {

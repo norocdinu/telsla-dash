@@ -20,6 +20,8 @@ export interface AppState {
   /** The clip list's tab and reason filter; kept while the list is closed, and used by Up next. */
   listTab: ListTab;
   listChip: ReasonCategory | null;
+  /** The Manage events screen (occasional clear-outs). */
+  manageOpen: boolean;
   mapOpen: boolean;
   mapLarge: boolean;
   view: { main: CameraId; grid: boolean };
@@ -57,6 +59,7 @@ export const appStore = createStore<AppState>({
   listOpen: false,
   listTab: 'all',
   listChip: null,
+  manageOpen: false,
   mapOpen: initialSettings.showMap && !narrow,
   mapLarge: false,
   view: initialSettings.lastView === 'grid' ? { main: 'front', grid: true } : { main: initialSettings.lastView, grid: false },

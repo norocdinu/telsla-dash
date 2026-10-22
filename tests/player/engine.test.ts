@@ -136,6 +136,25 @@ describe('PlaybackEngine', () => {
     expect(h.frame().offsetS).toBeCloseTo(1.6, 6);
   });
 
+  test('release lets go of every file, and a later load plays again', async () => {
+    const h = setup(['front', 'back']);
+    h.engine.load(timeline('a', [{ front: 'ok', back: 'ok' }, { front: 'ok', back: 'ok' }]), {});
+    h.engine.setVisible(['front', 'back'], 'front');
+    await flush();
+    h.engine.seek(T + 57_000);
+    await flush();
+    h.engine.play();
+    await h.run(1);
+    h.engine.release();
+    const all = [...h.videos.front!, ...h.videos.back!];
+    expect(all.every((v) => v.src === '' && v.paused)).toBe(true);
+    h.engine.load(timeline('b', [{ front: 'ok' }]), {});
+    await flush();
+    h.engine.play();
+    await h.run(1);
+    expect(h.active('front').paused).toBe(false);
+  });
+
   test('loading another timeline reports a missing camera again', async () => {
     const h = setup(['front', 'back']);
     h.engine.setVisible(['front', 'back'], 'front');
