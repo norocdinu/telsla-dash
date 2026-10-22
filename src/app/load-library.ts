@@ -54,6 +54,7 @@ async function finish(gen: number, files: SourceFile[], startedAt: number): Prom
     health: {},
     moments: {},
     route: {},
+    charts: {},
     durations: {},
     slots: {},
   });

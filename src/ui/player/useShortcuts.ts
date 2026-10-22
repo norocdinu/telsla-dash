@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { engine, jumpToEvent } from '../../app/playback';
+import { engine, jumpToEvent, toggleStats } from '../../app/playback';
 import { appStore, currentTimeline } from '../../app/state';
 import { pickTile, stripTiles } from './CameraStrip';
 
@@ -12,6 +12,7 @@ export const SHORTCUTS: { key: string; label: string }[] = [
   { key: 'E', label: 'Jump to Event' },
   { key: 'L', label: 'Clip list' },
   { key: 'M', label: 'Map' },
+  { key: 'S', label: 'Stats for nerds' },
 ];
 
 /** Frame length near the playhead, from the clip's driving data when known. */
@@ -45,6 +46,7 @@ export function useShortcuts(frameLength: FrameLength): void {
       } else if (key === 'e') jumpToEvent();
       else if (key === 'l') appStore.set((s) => ({ listOpen: !s.listOpen }));
       else if (key === 'm') appStore.set((s) => ({ mapOpen: !s.mapOpen }));
+      else if (key === 's') toggleStats();
       else return;
       e.preventDefault();
     };
