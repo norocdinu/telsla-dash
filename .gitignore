@@ -5,3 +5,5 @@ reference/
 .fake-drive/
 .superpowers/
 *.local
+release/
+.installer/

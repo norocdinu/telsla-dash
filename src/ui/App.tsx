@@ -1,6 +1,7 @@
 import { LANDING } from '../app/messages';
 import { appStore } from '../app/state';
 import { useStore } from '../app/store';
+import { AppNotices } from './AppNotices';
 import { DeleteDialog } from './DeleteDialog';
 import { FullMessage } from './FullMessage';
 import { Landing } from './Landing';
@@ -31,6 +32,7 @@ export function App() {
       {screen}
       {hasLibrary && manageOpen && <ManageEvents />}
       <DeleteDialog />
+      <AppNotices />
       {dragging && (
         <div className="drop-overlay" aria-hidden="true">
           <span>{LANDING.dropHere}</span>
