@@ -6,7 +6,7 @@ The single most important goal is **ease of use**. Someone who has never used it
 
 ## Ground rules
 - **Runs entirely in the browser.** No server, no account, no uploads, no analytics. Video files and driving data never leave the computer. The only network requests allowed are map tiles (see Map).
-- **Read-only.** Never write, rename, move or delete anything on the user's drive.
+- **Read-only, except deletes the user confirms in a dialog.** Nothing else is ever written, renamed or moved. Deleting (whole events or drives, from the player, the clip list or Manage events) is described in `Documentation/2026-10-22-delete-design.md`.
 - **Not a Tesla product.** Copy the layout and feel, but don't use Tesla's logo, wordmark, fonts or the word "Tesla" in the app name. Describing compatibility in text is fine ("Works with Tesla dashcam clips").
 - **Never invent data.** No sample or placeholder telemetry in the UI. If a field is missing, show that it's missing.
 - **Tooling:** Vite + React + TypeScript (strict), using **bun / bunx** instead of npm / npx (`bun install`, `bun run dev`, `bun test`, `bunx vite build`). Keep dependencies few. Expected ones are `protobufjs` (decoding), `leaflet` (map) and nothing heavy for UI.
@@ -166,7 +166,7 @@ Reference screenshots, for layout only:
 3. **Controls floating on the bottom of the video:**
    - **Left:** a red **Jump to Event** button. It goes to `event.json` `timestamp` minus 3 seconds, and shows only when the event has a timestamp.
    - **Centre:** back 15 s, play/pause, forward 15 s, and a speed button that cycles 0.5× / 1× / 2× / 4×.
-   - **Right:** in the car this is the trash can. We never delete, so put a **map** toggle here (see Map).
+   - **Right:** a **map** toggle (see Map), then the **trash can**, as in the car. It deletes this event or drive after a confirmation dialog (see `Documentation/2026-10-22-delete-design.md`).
 4. **A thin scrubber line** under the controls, spanning the **whole event or drive**, not one file.
    - A red tick marks the event trigger.
    - Smaller ticks mark Moments (below).
@@ -232,6 +232,7 @@ Keep it to:
 - **Units:** km/h or mph. The default follows the browser locale (en-US → mph, otherwise km/h).
 - **Show driving panel:** on or off.
 - **Map:** on or off.
+- **Manage events…:** opens the clear-out screen (delete by type, reason and age).
 
 Store these in `localStorage`, wrapped in try/catch, with the app working without it.
 
@@ -304,6 +305,7 @@ Every message says what happened and what to do, in plain words:
   - editing or trimming video
 - **Anti-goals.** It has failed, even if it works, if:
   - anything is uploaded
+  - anything is deleted without the user pressing Delete in the confirmation dialog, or more is deleted than the dialog listed
   - it looks like an official Tesla product
   - a full drive takes more than a few seconds to list
   - the driving panel shows numbers that don't match the frame on screen

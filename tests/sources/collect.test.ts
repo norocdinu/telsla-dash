@@ -65,3 +65,54 @@ describe('collectSources', () => {
     expect((await f.getFile()).name).toBe('2026-10-16_20-05-14-front.mp4');
   });
 });
+
+/** A folder backed by an edit-capable handle. */
+function wdir(name: string, ...children: EntryNode[]): EntryNode {
+  return { name, kind: 'dir', list: async () => children, removeEntry: async () => undefined };
+}
+
+/** A dropped or picked root that can ask for edit access. */
+function wroot(name: string, ...children: EntryNode[]): EntryNode {
+  return { ...wdir(name, ...children), requestWrite: async () => true };
+}
+
+describe('collectSources with folder handles (for deleting)', () => {
+  const EV = '2026-10-16_20-10-53';
+
+  test('each file knows its folder, the folder’s parent and the root', async () => {
+    const drive = wroot('E', wdir('TeslaCam', wdir('SavedClips', wdir(EV, file('2026-10-16_20-05-14-front.mp4'), file('event.json')))));
+    const files = await collectSources([drive]);
+    expect(files).toHaveLength(2);
+    for (const f of files) {
+      expect(f.loc?.dir.name).toBe(EV);
+      expect(f.loc?.parent?.name).toBe('SavedClips');
+      expect(f.loc?.root.id).toBe('0:E');
+    }
+    expect(files[0].loc!.dir).toBe(files[1].loc!.dir);
+    expect(await files[0].loc!.root.requestWrite()).toBe(true);
+  });
+
+  test('a dropped event folder has no reachable parent', async () => {
+    const [f] = await collectSources([wroot(EV, file('2026-10-16_20-05-14-front.mp4'))]);
+    expect(f.loc?.dir.name).toBe(EV);
+    expect(f.loc?.parent).toBeNull();
+  });
+
+  test('folders without edit-capable handles give no location', async () => {
+    const files = await collectSources([dir('TeslaCam', dir('SavedClips', dir(EV, file('2026-10-16_20-05-14-front.mp4'))))]);
+    expect(files[0].loc).toBeUndefined();
+  });
+
+  test('loose files give no location', async () => {
+    const [f] = await collectSources([file('2026-10-16_20-05-14-front.mp4')]);
+    expect(f.loc).toBeUndefined();
+  });
+
+  test('two dropped folders are two roots', async () => {
+    const files = await collectSources([
+      wroot('SavedClips', wdir(EV, file('2026-10-16_20-05-14-front.mp4'))),
+      wroot('SentryClips', wdir('2026-10-18_14-12-00', file('2026-10-18_14-01-11-front.mp4'))),
+    ]);
+    expect(new Set(files.map((f) => f.loc?.root.id))).toEqual(new Set(['0:SavedClips', '1:SentryClips']));
+  });
+});

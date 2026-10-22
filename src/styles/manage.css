@@ -1,0 +1,159 @@
+/* Manage events: a full sheet for the occasional clear-out, in the clip list's light style. */
+
+.manage {
+  position: fixed;
+  inset: 12px;
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: var(--sheet);
+  color: var(--sheet-text);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  color-scheme: light;
+  overflow: hidden;
+  animation: sheet-in 180ms ease-out;
+}
+
+.manage-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 0;
+}
+
+.manage-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.manage-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 4px 16px;
+}
+
+.manage-filters .tabs {
+  justify-content: flex-start;
+}
+
+.manage-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-title);
+  color: var(--sheet-text-2);
+}
+
+.manage-date input {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid #d4d4d8;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sheet-text);
+  font: inherit;
+}
+
+.manage .vlist {
+  border-top: 1px solid var(--row);
+  border-bottom: 1px solid var(--row);
+}
+
+.manage-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 15rem) minmax(0, 1fr) minmax(0, 10rem) 5.5rem;
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+  margin-top: 4px;
+  padding: 0 12px 0 4px;
+  border-radius: 10px;
+  background: var(--row);
+  font-size: var(--fs-2);
+  cursor: pointer;
+}
+
+.manage-row input {
+  width: 20px;
+  height: 20px;
+  justify-self: center;
+  accent-color: var(--red-button);
+}
+
+.manage-when {
+  font-size: var(--fs-title);
+  font-weight: 600;
+}
+
+.manage-where,
+.manage-reason {
+  color: var(--sheet-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.manage-size {
+  text-align: right;
+  color: var(--sheet-text-2);
+}
+
+.manage-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 16px;
+}
+
+.manage-select {
+  display: flex;
+  gap: 8px;
+}
+
+.manage-total {
+  margin-left: auto;
+  color: var(--sheet-text-2);
+  font-size: var(--fs-title);
+}
+
+.settings-action {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sheet-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-action:hover {
+  background: var(--row);
+}
+
+@media (max-width: 640px) {
+  .manage {
+    inset: 0;
+    border-radius: 0;
+  }
+
+  .manage-row {
+    grid-template-columns: 44px minmax(0, 1fr) 5rem;
+  }
+
+  .manage-where,
+  .manage-reason {
+    display: none;
+  }
+
+  .manage-total {
+    margin-left: 0;
+    width: 100%;
+  }
+}

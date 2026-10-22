@@ -61,6 +61,15 @@ export class TelemetryCache {
     return p;
   }
 
+  /** Forgets these files (e.g. after deleting them). */
+  forget(paths: string[]): void {
+    for (const p of paths) {
+      this.done.delete(p);
+      this.loading.delete(p);
+      this.failures.delete(p);
+    }
+  }
+
   /** Forgets everything, e.g. when a new folder is dropped. Loads in flight still settle. */
   clear(): void {
     this.done.clear();

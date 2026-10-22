@@ -6,6 +6,7 @@ import './styles/app.css';
 import './styles/player.css';
 import './styles/list.css';
 import './styles/map.css';
+import './styles/manage.css';
 import { App } from './ui/App';
 
 createRoot(document.getElementById('root')!).render(
