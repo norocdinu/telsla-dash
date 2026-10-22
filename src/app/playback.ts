@@ -135,6 +135,22 @@ export function openTimeline(id: string, startWallMs?: number, play = false): vo
   appStore.set({ timelineId: id, listOpen: false });
 }
 
+/**
+ * Stops everything reading the current timeline's files: playback, the scan and length reading. It stays
+ * stopped through other app changes until another timeline opens, or reloadCurrent().
+ */
+export function stopCurrent(): void {
+  scanAbort?.abort();
+  measureAbort?.abort();
+  engine.release();
+}
+
+/** Loads the current timeline again after stopCurrent(), e.g. what is left of it after a delete. */
+export function reloadCurrent(): void {
+  loadedId = null;
+  onAppChange();
+}
+
 export function setView(view: { main: CameraId; grid: boolean }): void {
   appStore.set({ view });
   updateSettings({ lastView: view.grid ? 'grid' : view.main });

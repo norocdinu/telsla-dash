@@ -33,3 +33,18 @@ export const NO_DATA = 'No driving data here';
 export const NO_DATA_WHY = 'The car was parked, or the clip is from before firmware 2025.44.25 or from a car older than HW3.';
 export const MAP_TOOLTIP = 'Map tiles load from OpenStreetMap. Your clips stay on this computer.';
 export const RECENT_PLACE = 'Recent drive';
+
+export const DELETE = {
+  warning: "It's removed from the drive permanently. This can't be undone.",
+  firstTime: 'Your browser will ask to allow editing the folder.',
+  counting: 'Counting files…',
+  refused: 'Deleting needs permission to edit the folder. Nothing was deleted.',
+  refusedSome: (events: number) =>
+    events === 1 ? '1 event was left: no permission to edit its folder.' : `${events} events were left: no permission to edit their folder.`,
+  unreadable: "Couldn't read this event's files, so it can't be deleted here.",
+  failed: (events: number) =>
+    `Couldn't delete ${events} ${events === 1 ? 'event' : 'events'}. The drive may be read-only or a file may be in use.`,
+  notDeletable: 'To delete, open the folder with Choose folder or drag it in (Chrome or Edge).',
+  error: 'Something went wrong while deleting. Check the clip list for what is left.',
+  uncounted: "Couldn't read the files to delete. Nothing was deleted.",
+};

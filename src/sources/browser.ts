@@ -1,5 +1,5 @@
 // Browser adapters for getting files in: drag and drop, the folder picker and file inputs.
-// Everything is read-only.
+// Reading is all they do; deleting goes through the removeEntry/requestWrite they expose (src/delete).
 import type { SourceFile } from '../library/types';
 import { KEEP, type EntryNode } from './collect';
 
@@ -30,38 +30,66 @@ function fromEntry(entry: FileSystemEntry): EntryNode {
   };
 }
 
-/** Must be called synchronously inside the drop event. */
-export function fromDataTransfer(items: DataTransferItemList): EntryNode[] {
-  const nodes: EntryNode[] = [];
-  for (const item of Array.from(items)) {
-    if (item.kind !== 'file') continue;
-    const entry = item.webkitGetAsEntry?.();
-    if (entry) {
-      nodes.push(fromEntry(entry));
-    } else {
-      const f = item.getAsFile();
-      if (f) nodes.push({ name: f.name, kind: 'file', open: async () => f });
-    }
-  }
-  return nodes;
+function fromItemFallback(item: DataTransferItem, entry: FileSystemEntry | null): EntryNode | null {
+  if (entry) return fromEntry(entry);
+  const f = item.getAsFile();
+  return f ? { name: f.name, kind: 'file', open: async () => f } : null;
 }
 
-export function fromDirectoryHandle(h: FileSystemDirectoryHandle): EntryNode {
-  return {
+/**
+ * Must be called synchronously inside the drop event (the items are cleared afterwards). Chrome and Edge give
+ * File System Access handles, which can delete; other browsers fall back to read-only entries.
+ */
+export function fromDataTransfer(items: DataTransferItemList): Promise<EntryNode[]> {
+  const pending: Promise<EntryNode | null>[] = [];
+  for (const item of Array.from(items)) {
+    if (item.kind !== 'file') continue;
+    const entry = item.webkitGetAsEntry?.() ?? null;
+    if (typeof item.getAsFileSystemHandle === 'function') {
+      pending.push(
+        item.getAsFileSystemHandle().then(
+          (h) => {
+            if (h?.kind === 'directory') return fromDirectoryHandle(h as FileSystemDirectoryHandle, true);
+            if (h?.kind === 'file') return fromFileHandle(h as FileSystemFileHandle);
+            return fromItemFallback(item, entry);
+          },
+          () => fromItemFallback(item, entry),
+        ),
+      );
+    } else {
+      pending.push(Promise.resolve(fromItemFallback(item, entry)));
+    }
+  }
+  return Promise.all(pending).then((nodes) => nodes.filter((n): n is EntryNode => n !== null));
+}
+
+function fromFileHandle(fh: FileSystemFileHandle): EntryNode {
+  return { name: fh.name, kind: 'file', open: () => fh.getFile() };
+}
+
+/** A folder from a File System Access handle. Roots can ask for edit access, which deleting needs. */
+export function fromDirectoryHandle(h: FileSystemDirectoryHandle, isRoot = false): EntryNode {
+  const node: EntryNode = {
     name: h.name,
     kind: 'dir',
     list: async () => {
       const out: EntryNode[] = [];
       for await (const child of h.values()) {
         if (child.kind === 'directory') out.push(fromDirectoryHandle(child as FileSystemDirectoryHandle));
-        else {
-          const fh = child as FileSystemFileHandle;
-          out.push({ name: fh.name, kind: 'file', open: () => fh.getFile() });
-        }
+        else out.push(fromFileHandle(child as FileSystemFileHandle));
       }
       return out;
     },
+    removeEntry: (name) => h.removeEntry(name),
   };
+  if (isRoot) {
+    node.requestWrite = async () => {
+      const opts = { mode: 'readwrite' as const };
+      if ((await h.queryPermission?.(opts)) === 'granted') return true;
+      return (await h.requestPermission?.(opts)) === 'granted';
+    };
+  }
+  return node;
 }
 
 export function fromFileList(list: FileList | File[]): SourceFile[] {
@@ -100,8 +128,9 @@ function pickWithInput(setup: (input: HTMLInputElement) => void): Promise<FileLi
 export async function pickFolder(): Promise<PickResult> {
   if (typeof window.showDirectoryPicker === 'function') {
     try {
+      // Read access now; edit access is asked only when the user confirms a delete.
       const handle = await window.showDirectoryPicker({ mode: 'read', id: 'teslacam' });
-      return { kind: 'nodes', nodes: [fromDirectoryHandle(handle)] };
+      return { kind: 'nodes', nodes: [fromDirectoryHandle(handle, true)] };
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return { kind: 'cancelled' };
       return { kind: 'refused' };

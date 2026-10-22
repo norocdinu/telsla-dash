@@ -22,6 +22,8 @@ export function useShortcuts(frameLength: FrameLength): void {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // A dialog is open (e.g. confirming a delete): the player behind it ignores keys.
+      if (document.querySelector('[aria-modal="true"]')) return;
       if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName))) return;
       const tl = currentTimeline();
       if (!tl) return;

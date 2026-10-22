@@ -8,9 +8,10 @@ import { formatWall } from '../../library/time';
 import type { Timeline } from '../../library/types';
 import type { Moment } from '../../moments/detect';
 import { bounds, buildSpans } from '../../player/timeline-math';
-import { formatDuration } from '../format';
+import { formatDuration, placeOf } from '../format';
+import { DeleteButton } from '../DeleteButton';
 import { LockIcon } from '../icons';
-import { placeOf, useThumb } from '../player/TopCards';
+import { useThumb } from '../player/TopCards';
 import { momentsBadge } from './list-model';
 
 const NO_MOMENTS: Moment[] = [];
@@ -33,6 +34,7 @@ export function ClipRow({ tl, current }: { tl: Timeline; current: boolean }) {
   const badge = momentsBadge(moments);
 
   return (
+    <div className="clip-row-wrap">
     <button type="button" className={`clip-row${current ? ' is-current' : ''}`} onClick={() => openTimeline(tl.id, undefined, true)} aria-current={current}>
       <span className="clip-thumb">
         {!playable ? (
@@ -61,5 +63,8 @@ export function ClipRow({ tl, current }: { tl: Timeline; current: boolean }) {
         </span>
       </span>
     </button>
+    {/* A sibling, not inside the row button: buttons can't nest. */}
+    <DeleteButton id={tl.id} origin="list" className="row-trash" label={`Delete ${formatWall(tl.startMs, 'full')}`} />
+    </div>
   );
 }
