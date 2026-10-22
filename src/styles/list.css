@@ -301,6 +301,12 @@
   color: var(--sheet-text-2);
 }
 
+.settings-version {
+  padding: 6px 6px 2px;
+  font-size: 11px;
+  color: var(--sheet-text-2);
+}
+
 .settings-shortcuts kbd {
   display: inline-block;
   min-width: 44px;

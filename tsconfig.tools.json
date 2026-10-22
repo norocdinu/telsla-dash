@@ -17,5 +17,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["tests", "scripts", "vite.config.ts", "vite.dev-samples.ts", "vite.dev-delete-guard.ts"]
+  "include": ["tests", "scripts", "vite.config.ts", "vite.dev-samples.ts", "vite.dev-delete-guard.ts", "vite.version.ts", "vite.sw.ts", "src/globals.d.ts"], "exclude": [".installer"]
 }

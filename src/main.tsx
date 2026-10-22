@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { loadFromSources } from './app/load-library';
+import { registerServiceWorker } from './app/pwa';
 import './styles/tokens.css';
 import './styles/app.css';
 import './styles/player.css';
@@ -15,6 +16,8 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+
+registerServiceWorker();
 
 // Dev only: ?dev-root=Samples (or .fake-drive/<name>) loads local clips without file dialogs.
 if (import.meta.env.DEV) {
