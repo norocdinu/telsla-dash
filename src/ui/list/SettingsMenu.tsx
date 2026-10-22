@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { appStore, updateSettings } from '../../app/state';
+import { APP_BUILD, APP_VERSION, buildLabel } from '../../app/version';
 import { useStore } from '../../app/store';
 import { MoreIcon } from '../icons';
 import { SHORTCUTS } from '../player/useShortcuts';
@@ -73,6 +74,7 @@ export function SettingsMenu() {
               </div>
             ))}
           </div>
+          <div className="settings-version tabular">Dashcam Viewer {buildLabel(APP_VERSION, APP_BUILD)}</div>
         </div>
       )}
     </div>

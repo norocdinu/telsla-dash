@@ -248,6 +248,13 @@ Every message says what happened and what to do, in plain words:
 - **Empty or broken file** (a known glitch when the drive is unplugged while in use): skip it, show it in the list as "Damaged file", and keep playing the rest.
 - **Loading:** skeletons for thumbnails, and a thin progress line while driving data is read. Never a blank screen.
 
+## Install (v0.3)
+Installed from the computer itself, never from a public website; see `Documentation/2026-10-22-install-app-design.md`.
+- **This laptop:** `bun run install-app` builds the app, serves it on `http://localhost:5191` and opens the browser; click Install. Run it again to update.
+- **Another computer:** each GitHub release (from v0.3) carries `Dashcam Viewer Installer.exe` (about 100 MB, unsigned: "More info → Run anyway"), which does the same with only Chrome or Edge needed. `bun run build-installer` makes it.
+- Once installed, the app opens from the Start menu and works offline; only the map needs internet ("Map needs internet"). A new build shows "Updated to v0.3 — reload" and never reloads by itself.
+- Settings shows the version and build ("Dashcam Viewer v0.3 · 1a2b3c4"); the version lives in `package.json`.
+
 ## Browsers and devices
 - **Must load and play:** desktop Chrome and Edge (current versions), with every feature.
 - **Should load and play H.264 clips:** desktop Firefox and Safari. Where a camera's codec isn't supported, show the codec message and suggest Chrome or Edge.
@@ -295,7 +302,7 @@ Every message says what happened and what to do, in plain words:
 - One-page PDF incident report (stills, map, numbers).
 - ~~Speed / g-force graph under the scrubber.~~ Replaced by Stats for nerds (see Settings).
 - Trip statistics across days.
-- Installable offline app (PWA).
+- ~~Installable offline app (PWA).~~ Done in v0.3 (see Install).
 - Decrypting encrypted clips (needs Tesla's account keys; point users to dashcam.tesla.com instead).
 
 ## Non-goals and anti-goals

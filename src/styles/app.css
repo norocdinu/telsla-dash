@@ -321,6 +321,35 @@ input:focus-visible {
   font-size: var(--fs-2);
 }
 
+/* Install banner and update notice: bottom left, out of the way of playback. */
+.app-notices {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 205;
+  display: grid;
+  gap: 8px;
+  max-width: min(460px, calc(100% - 24px));
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 14px;
+  border-radius: 12px;
+  background: #18181b;
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  font-size: var(--fs-2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  animation: fade-in 150ms ease-out;
+}
+
+.notice > span {
+  flex: 1;
+}
+
 .toast-close {
   min-width: 44px;
   min-height: 44px;

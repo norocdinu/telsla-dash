@@ -31,6 +31,7 @@ export const DAMAGED_FILE = 'Damaged file';
 export const NO_VIDEO = 'No video';
 export const NO_DATA = 'No driving data here';
 export const NO_DATA_WHY = 'The car was parked, or the clip is from before firmware 2025.44.25 or from a car older than HW3.';
+export const MAP_OFFLINE = 'Map needs internet';
 export const MAP_TOOLTIP = 'Map tiles load from OpenStreetMap. Your clips stay on this computer.';
 export const RECENT_PLACE = 'Recent drive';
 
