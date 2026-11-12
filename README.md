@@ -39,6 +39,7 @@ Dashcam Viewer plays the clips a Tesla saves to its USB drive (the `TeslaCam` fo
 - **Route map:** the drive's route and the car's position, on OpenStreetMap.
 - **Stats for nerds:** a see-through panel with every recorded value for the frame on screen, plus charts of speed, pedals, steering and g-force.
   - While playing, the charts span the whole clip; when paused, they zoom to 15 seconds either side.
+- **Export a moment:** mark In and Out on the scrubber and save that part as an MP4, with the driving panel, date and place, a route trace and g-force burned in. Pick one camera or a grid of several. Made on your computer, faster than real time.
 - **Clip list:**
   - Filter by type (Recent, Saved, Sentry) and by reason (honk, object detected, …).
   - **Up next** follows the current filter.
@@ -94,7 +95,8 @@ bun run install-app
    - Switch cameras from the strip, or press **G** for the grid.
    - Click a moment's tick to jump to it.
 4. **More detail:** open **Stats for nerds** with the chart button beside the map button, or press **S**. Pause to zoom the charts to 15 seconds around the moment on screen.
-5. **Delete:** use the trash button, or **⋯ → Manage events…** in the clip list.
+5. **Export:** press the scissors button (or **X**), drag the two handles on the scrubber, then **Export…**. Choose the cameras and what to burn in, then **Save video**. Needs Chrome or Edge.
+6. **Delete:** use the trash button, or **⋯ → Manage events…** in the clip list.
    - Deleting needs the folder opened with **Choose folder** or by drag and drop in Chrome or Edge. The browser asks once for permission to edit it.
 
 ### Keyboard shortcuts
@@ -110,6 +112,8 @@ bun run install-app
 | <kbd>L</kbd> | Clip list |
 | <kbd>M</kbd> | Map |
 | <kbd>S</kbd> | Stats for nerds |
+| <kbd>X</kbd> | Mark a part to export |
+| <kbd>I</kbd> / <kbd>O</kbd> | Set the export start / end at the playhead |
 
 ### Settings
 
@@ -156,6 +160,7 @@ Real clips contain GPS positions and place names, so they're **never committed**
   - Copy some clips into `Samples/`, keeping the car's folder layout (`SavedClips/`, `SentryClips/`, `RecentClips/`).
   - Then open `http://localhost:5190/?dev-root=Samples` to load them without a file dialog. This only works on the development server.
 - **Throwaway copies for deleting:** `bun scripts/make-delete-copy.ts` hard-links the samples into `.fake-drive/delete/`. Open it with `?dev-root=.fake-drive/delete`. The dev server only ever deletes inside `.fake-drive/`.
+- **No clips at hand:** open `http://localhost:5190/?dev-synthetic` for a small made-up Saved event (four cameras, made-up driving data), encoded in the browser. Development server only.
 - **Edge cases:**
   - `bun scripts/make-damaged.ts` makes damaged, "encrypted" and partial copies.
   - `bun scripts/make-fake-drive.ts` makes a full day of Recent clips, to check how fast listing is.
@@ -167,11 +172,12 @@ Real clips contain GPS positions and place names, so they're **never committed**
 src/
   app/        state, playback wiring, loading, deleting, settings, install/update (pwa.ts)
   library/    file names → events and drives (timelines)
-  mp4/        MP4 box parsing (moov, frame times)
+  mp4/        MP4 box parsing (moov, frame times) and writing (exported videos)
   sei/        driving data: SEI unwrapping, protobuf decoding, the background worker, caching
   player/     playback engine (two <video> elements per camera, kept in sync)
   moments/    hard braking, swerve and self-driving-off detection
   stats/      Stats for nerds: compact series, time window, scales, number rows
+  export/     Export a moment: range rules, layout, overlay drawing, the WebCodecs worker
   delete/     delete planning and running (File System Access API)
   sources/    folder and file access (picker, drag and drop)
   sw/         the service worker (offline copy of the app)
@@ -201,6 +207,7 @@ Dashcam Viewer reads the MP4 index, unwraps each frame's SEI (stripping emulatio
   - [Deleting clips and events](Documentation/2026-10-22-delete-design.md)
   - [Stats for nerds](Documentation/2026-10-22-stats-for-nerds-design.md)
   - [Install as an app](Documentation/2026-10-22-install-app-design.md)
+  - [Export a moment](Documentation/2026-11-12-export-design.md)
 
 ## Acknowledgements
 

@@ -9,6 +9,8 @@ import { ClipList } from '../list/ClipList';
 import { CameraStrip } from './CameraStrip';
 import { Controls } from './Controls';
 import { DrivingPanel } from './DrivingPanel';
+import { ExportBar, ExportButton, ExportDialog } from './Export';
+import { exportStore } from '../../app/export';
 import { MapCard, MapToggle, useRoute } from './MapCard';
 import { StatsPanel, StatsToggle } from './StatsPanel';
 import { TopCards } from './TopCards';
@@ -20,6 +22,7 @@ export function Player() {
   const listOpen = useStore(appStore, (s) => s.listOpen);
   const mapOpen = useStore(appStore, (s) => s.mapOpen);
   const showStats = useStore(appStore, (s) => s.settings.showStats);
+  const exportDialog = useStore(exportStore, (s) => !['off', 'marking'].includes(s.step.kind));
 
   const frameLength = useCallback(() => {
     const { index, offsetS } = playStore.get();
@@ -43,17 +46,20 @@ export function Player() {
           tl={tl}
           right={
             <>
+              <ExportButton />
               <MapToggle tl={tl} />
               <StatsToggle />
               <DeleteButton id={tl.id} origin="player" className="icon-btn" label="Delete this clip" />
             </>
           }
         />
+        <ExportBar tl={tl} />
         {showStats && <StatsPanel tl={tl} />}
         {mapOpen && <MapSlot tl={tl} />}
       </div>
       <CameraStrip tl={tl} />
       {listOpen && <ClipList />}
+      {exportDialog && <ExportDialog tl={tl} />}
     </main>
   );
 }

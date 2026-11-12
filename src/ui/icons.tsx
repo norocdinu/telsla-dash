@@ -152,3 +152,12 @@ export const TrashIcon = (p: IconProps) => (
     <path d="M6.5 6.5 7.4 19c.1.9.8 1.5 1.6 1.5h6c.9 0 1.6-.6 1.6-1.5l.9-12.5M10 10.5v6M14 10.5v6" />
   </Icon>
 );
+
+/** Export a moment: scissors. */
+export const ScissorsIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="6.5" cy="6.5" r="2.8" />
+    <circle cx="6.5" cy="17.5" r="2.8" />
+    <path d="M8.8 8.2 20 18M8.8 15.8 20 6" />
+  </Icon>
+);

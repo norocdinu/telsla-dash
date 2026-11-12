@@ -1,0 +1,138 @@
+/* Export a moment: the range on the scrubber, the marking bar and the dialog's parts. */
+
+.export-range {
+  position: absolute;
+  top: 50%;
+  height: 7px;
+  margin-top: -3.5px;
+  border-radius: 3px;
+  background: rgba(59, 130, 246, 0.55);
+  pointer-events: none;
+}
+
+.export-handle {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 26px;
+  margin: -13px 0 0 -7px;
+  border-radius: 4px;
+  background: var(--blue);
+  border: 2px solid #fff;
+  cursor: ew-resize;
+  touch-action: none;
+  z-index: 1;
+}
+
+.export-handle:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.export-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 112px;
+  z-index: 4; /* above the map card */
+  transform: translateX(-50%);
+  width: max-content;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 10px 8px 16px;
+  max-width: calc(100% - 24px);
+  font-size: var(--fs-2);
+  animation: fade-in 150ms ease-out;
+}
+
+.export-bar-issue {
+  color: var(--amber);
+}
+
+.export-bar-btn {
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.icon-btn.is-on {
+  background: rgba(59, 130, 246, 0.35);
+}
+
+.export-group {
+  margin: 14px 0 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.export-group legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: var(--fs-2);
+  font-weight: 600;
+  color: var(--sheet-text);
+}
+
+.export-group .modal-note {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  color: var(--sheet-text-2);
+}
+
+.export-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  font-size: var(--fs-title);
+  cursor: pointer;
+}
+
+.export-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--blue-button);
+}
+
+.export-progress {
+  position: relative;
+  margin-top: 18px;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--row);
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-2);
+}
+
+.export-progress-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: rgba(37, 99, 235, 0.3);
+  transition: width 150ms linear;
+}
+
+.export-progress span {
+  position: relative;
+}
+
+.export-error {
+  margin-top: 14px !important;
+  color: var(--red-button) !important;
+}
+
+@media (max-width: 640px) {
+  .export-bar {
+    left: 12px;
+    right: 12px;
+    bottom: 132px;
+    transform: none;
+    width: auto;
+    max-width: none;
+  }
+}

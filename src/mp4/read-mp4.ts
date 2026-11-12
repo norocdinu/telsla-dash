@@ -13,6 +13,15 @@ export interface Mp4Info {
   /** True when a ctts box exists (frames are reordered for display). */
   reordered: boolean;
   durationS: number;
+  /** Picture size from the sample entry (0 when unknown). */
+  width: number;
+  height: number;
+  /** The decoder configuration record (avcC box payload), for WebCodecs; null when absent. */
+  avcC: Uint8Array | null;
+  /** 0-based indices of keyframes (stss); null means every frame is a keyframe. */
+  sync: Uint32Array | null;
+  /** Composition offset of each sample (ctts), in timescale units; null when there's no ctts. */
+  cts: Int32Array | null;
 }
 
 export class Mp4Error extends Error {
@@ -55,6 +64,17 @@ export function parseMp4(buf: Uint8Array): Mp4Info {
 
   const stsd = need(child(buf, stbl, 'stsd'), 'stsd');
   const codec = fourcc(buf, stsd.body + 12);
+  // The first sample entry: a VisualSampleEntry is 78 bytes of fields, then child boxes (avcC, …).
+  const entry = [...boxes(buf, stsd.body + 8, Math.min(stsd.end, buf.length))][0];
+  let width = 0;
+  let height = 0;
+  let avcC: Uint8Array | null = null;
+  if (entry && entry.body + 28 <= buf.length) {
+    width = v.getUint16(entry.body + 24);
+    height = v.getUint16(entry.body + 26);
+    const cfg = child(buf, { body: entry.body + 78, end: entry.end }, 'avcC');
+    if (cfg) avcC = buf.slice(cfg.body, cfg.end);
+  }
 
   const stts = need(child(buf, stbl, 'stts'), 'stts');
   const sttsCount = v.getUint32(stts.body + 4);
@@ -111,6 +131,27 @@ export function parseMp4(buf: Uint8Array): Mp4Info {
     }
   }
 
+  let sync: Uint32Array | null = null;
+  const stss = child(buf, stbl, 'stss');
+  if (stss) {
+    const n = v.getUint32(stss.body + 4);
+    sync = new Uint32Array(n);
+    for (let i = 0; i < n; i++) sync[i] = v.getUint32(stss.body + 8 + i * 4) - 1;
+  }
+
+  let cts: Int32Array | null = null;
+  const ctts = child(buf, stbl, 'ctts');
+  if (ctts) {
+    cts = new Int32Array(sampleCount);
+    const signed = buf[ctts.body] === 1;
+    const n = v.getUint32(ctts.body + 4);
+    for (let i = 0, s = 0; i < n && s < sampleCount; i++) {
+      const count = v.getUint32(ctts.body + 8 + i * 8);
+      const off = signed ? v.getInt32(ctts.body + 12 + i * 8) : v.getUint32(ctts.body + 12 + i * 8);
+      for (let k = 0; k < count && s < sampleCount; k++) cts[s++] = off;
+    }
+  }
+
   const durations = Uint32Array.from(durationList.slice(0, sampleCount));
   return {
     codec,
@@ -119,9 +160,52 @@ export function parseMp4(buf: Uint8Array): Mp4Info {
     sizes,
     offsets,
     mediaTime,
-    reordered: child(buf, stbl, 'ctts') !== null,
+    reordered: ctts !== null,
     durationS: durations.reduce((a, b) => a + b, 0) / timescale,
+    width,
+    height,
+    avcC,
+    sync,
+    cts,
   };
+}
+
+/** When each sample is shown, in seconds from the clip start (decode time plus its composition offset). */
+export function presentationTimes(info: Mp4Info): Float64Array {
+  const t = new Float64Array(info.durations.length);
+  let dts = 0;
+  for (let i = 0; i < t.length; i++) {
+    t[i] = (dts + (info.cts?.[i] ?? 0) - info.mediaTime) / info.timescale;
+    dts += info.durations[i];
+  }
+  return t;
+}
+
+/** The keyframe at or before sample `i` (0 when there's none). */
+export function keyframeBefore(info: Pick<Mp4Info, 'sync'>, i: number): number {
+  if (!info.sync) return i;
+  let best = 0;
+  for (const k of info.sync) {
+    if (k <= i) best = k;
+    else break;
+  }
+  return best;
+}
+
+/** Reads only a file's index: walks its top-level boxes with small reads, then parses the moov. Null without one. */
+export async function readIndex(read: (offset: number, length: number) => Promise<Uint8Array>, size: number): Promise<Mp4Info | null> {
+  let offset = 0;
+  while (offset + 8 <= size) {
+    const h = await read(offset, 16);
+    const v = new DataView(h.buffer, h.byteOffset, h.byteLength);
+    let boxSize = v.getUint32(0);
+    if (boxSize === 1 && h.length >= 16) boxSize = Number(v.getBigUint64(8));
+    else if (boxSize === 0) boxSize = size - offset;
+    if (boxSize < 8 || offset + boxSize > size) return null;
+    if (fourcc(h, 4) === 'moov') return parseMp4(concatFtypMoov(await read(0, 8), await read(offset, boxSize)));
+    offset += boxSize;
+  }
+  return null;
 }
 
 /** Presentation time of each frame, in seconds. */

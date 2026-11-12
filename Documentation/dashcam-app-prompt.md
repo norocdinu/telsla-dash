@@ -295,10 +295,11 @@ Installed from the computer itself, never from a public website; see `Documentat
   - L: clip list
   - M: map
   - S: Stats for nerds
+  - X: mark a part to export; I / O: set its start / end at the playhead
   - Show the shortcuts in a tooltip on the ⋯ menu.
 
 ## Not now (later phases, don't build)
-- Export a moment as a video with the driving panel burned in.
+- ~~Export a moment as a video with the driving panel burned in.~~ Done (see `Documentation/2026-11-12-export-design.md`).
 - One-page PDF incident report (stills, map, numbers).
 - ~~Speed / g-force graph under the scrubber.~~ Replaced by Stats for nerds (see Settings).
 - Trip statistics across days.

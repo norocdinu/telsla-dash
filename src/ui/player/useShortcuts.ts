@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { exportStore, markAtPlayhead, stopMarking, toggleMarking } from '../../app/export';
 import { engine, jumpToEvent, toggleStats } from '../../app/playback';
 import { appStore, currentTimeline } from '../../app/state';
 import { pickTile, stripTiles } from './CameraStrip';
@@ -13,6 +14,8 @@ export const SHORTCUTS: { key: string; label: string }[] = [
   { key: 'L', label: 'Clip list' },
   { key: 'M', label: 'Map' },
   { key: 'S', label: 'Stats for nerds' },
+  { key: 'X', label: 'Export: mark a part' },
+  { key: 'I / O', label: 'Export: start / end at the playhead' },
 ];
 
 /** Frame length near the playhead, from the clip's driving data when known. */
@@ -47,6 +50,10 @@ export function useShortcuts(frameLength: FrameLength): void {
       else if (key === 'l') appStore.set((s) => ({ listOpen: !s.listOpen }));
       else if (key === 'm') appStore.set((s) => ({ mapOpen: !s.mapOpen }));
       else if (key === 's') toggleStats();
+      else if (key === 'x') toggleMarking();
+      else if (key === 'i') markAtPlayhead('in');
+      else if (key === 'o') markAtPlayhead('out');
+      else if (e.key === 'Escape' && exportStore.get().step.kind === 'marking') stopMarking();
       else return;
       e.preventDefault();
     };
