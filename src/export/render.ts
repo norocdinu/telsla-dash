@@ -8,7 +8,7 @@ import { telemetryAt, type TelemetryTrack } from '../sei/telemetry';
 import { avcCodecString, containRect, frameDurations, framesBetween } from './frames';
 import { bitrateFor, CODECS, KEYFRAME_EVERY_S, layoutFor } from './layout';
 import { drawCellLabel, drawNoVideo, drawOverlay } from './overlay';
-import type { ExportFailure, ExportJob } from './protocol';
+import type { ExportFailure, ExportJob, ExportStage } from './protocol';
 
 export class ExportError extends Error {
   readonly kind: ExportFailure;
@@ -23,14 +23,26 @@ const IN_FLIGHT = 6;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const us = (s: number) => Math.round(s * 1e6);
 
-/** One camera file, by its index; frames are read from the file one at a time. */
+/**
+ * Frames are read a few MB at a time: one read per frame meant thousands of small reads per camera,
+ * each paying the drive's latency.
+ */
+export const READ_AHEAD_BYTES = 4 * 1024 * 1024;
+/** A decoder that hasn't finished this long after it was told to has stalled; the camera draws as "no video". */
+const FLUSH_TIMEOUT_MS = 10_000;
+
+/** One camera file, by its index; frames come from a read-ahead window of the file. */
 class Clip {
   readonly pts: Float64Array;
+  private readonly keys: Set<number> | null;
+  private buf: Uint8Array | null = null;
+  private bufAt = 0;
   constructor(
     readonly file: File,
     readonly info: Mp4Info & { avcC: Uint8Array },
   ) {
     this.pts = presentationTimes(info);
+    this.keys = info.sync ? new Set(info.sync) : null;
   }
 
   static async open(file: File | undefined): Promise<Clip | null> {
@@ -47,11 +59,21 @@ class Clip {
 
   async sample(i: number): Promise<Uint8Array> {
     const o = this.info.offsets[i];
-    return new Uint8Array(await this.file.slice(o, o + this.info.sizes[i]).arrayBuffer());
+    const n = this.info.sizes[i];
+    if (!this.buf || o < this.bufAt || o + n > this.bufAt + this.buf.length) {
+      this.bufAt = o;
+      this.buf = new Uint8Array(await this.file.slice(o, o + Math.max(n, READ_AHEAD_BYTES)).arrayBuffer());
+    }
+    return this.buf.slice(o - this.bufAt, o - this.bufAt + n);
   }
 
   isKey(i: number): boolean {
-    return !this.info.sync || this.info.sync.includes(i);
+    return !this.keys || this.keys.has(i);
+  }
+
+  /** Lets go of the read-ahead window once the clip is done with. */
+  release(): void {
+    this.buf = null;
   }
 }
 
@@ -70,6 +92,8 @@ class ClipDecoder {
   private flushed = false;
   private broken = false;
   private wake: (() => void) | null = null;
+  /** Frames at or before this time (µs) are behind: only the latest of them is kept. */
+  private limit = -Infinity;
 
   constructor(
     private readonly clip: Clip,
@@ -86,6 +110,9 @@ class ClipDecoder {
         this.outputs++;
         this.ready.push(f);
         this.ready.sort((a, b) => a.timestamp - b.timestamp);
+        // Close what's behind straight away: decoding from a keyframe long before In would otherwise
+        // hold every frame since it, and a decoder with no frames left to lend stops (and flush never ends).
+        this.dropBehind();
         this.wake?.();
       },
       error: () => {
@@ -106,9 +133,19 @@ class ClipDecoder {
     });
   }
 
+  /** Makes the latest frame at or before the limit `current`, closing the ones before it. */
+  private dropBehind(): void {
+    while (this.ready.length && this.ready[0].timestamp <= this.limit) {
+      this.current?.close();
+      this.current = this.ready.shift()!;
+    }
+  }
+
   /** The latest frame shown at or before `t` (seconds into the clip), or null when there's none. */
   async frameAt(t: number): Promise<VideoFrame | null> {
     const limit = us(t) + 500;
+    this.limit = limit;
+    this.dropBehind();
     while (!this.broken && !this.ready.some((f) => f.timestamp > limit)) {
       if (this.next <= this.last) {
         const i = this.next++;
@@ -119,21 +156,22 @@ class ClipDecoder {
         if (this.fed - this.outputs >= IN_FLIGHT) await this.waitOutput(40);
       } else if (!this.flushed) {
         this.flushed = true;
-        try {
-          await this.decoder.flush();
-        } catch {
-          this.broken = true;
-        }
+        const done = await Promise.race([
+          this.decoder.flush().then(
+            () => true,
+            () => false,
+          ),
+          sleep(FLUSH_TIMEOUT_MS).then(() => false),
+        ]);
+        if (!done) this.broken = true;
       } else break;
     }
-    while (this.ready.length && this.ready[0].timestamp <= limit) {
-      this.current?.close();
-      this.current = this.ready.shift()!;
-    }
+    this.dropBehind();
     return this.broken ? null : this.current;
   }
 
   close(): void {
+    this.clip.release();
     this.current?.close();
     this.ready.forEach((f) => f.close());
     this.ready = [];
@@ -189,12 +227,16 @@ interface Plan {
   frames: number[];
 }
 
-export async function runExport(job: ExportJob, progress: (done: number, total: number) => void): Promise<{ mp4: Uint8Array; durationS: number }> {
+export async function runExport(
+  job: ExportJob,
+  progress: (done: number, total: number, stage: ExportStage) => void,
+): Promise<{ mp4: Uint8Array; durationS: number }> {
   if (typeof VideoEncoder === 'undefined' || typeof VideoDecoder === 'undefined' || typeof OffscreenCanvas === 'undefined') {
     throw new ExportError('unsupported', 'this browser has no video encoder');
   }
   const cameras = CAMERA_ORDER.filter((c) => job.cameras.includes(c));
 
+  progress(0, 0, 'opening');
   // Read every file's index first: it says which cameras have video, and how many frames there are.
   const plans: Plan[] = [];
   for (let m = 0; m < job.minutes.length; m++) {
@@ -213,6 +255,7 @@ export async function runExport(job: ExportJob, progress: (done: number, total: 
   }
   const total = plans.reduce((n, p) => n + p.frames.length, 0);
   if (!total) throw new ExportError('novideo', 'none of these cameras has video here');
+  progress(0, total, 'frames');
 
   const firstClock = plans[0].clock.info;
   const front = plans.map((p) => p.clocks.front?.info).find((i) => i && i.width) ?? firstClock;
@@ -293,7 +336,7 @@ export async function runExport(job: ExportJob, progress: (done: number, total: 
           vf.close();
           outS += lengths[k];
           while (encoder.encodeQueueSize > 4) await sleep(4);
-          progress(++done, total);
+          progress(++done, total, 'frames');
         }
       } finally {
         decoders.forEach((d) => d.close());

@@ -1,7 +1,7 @@
 // Export a moment: marking In and Out on the scrubber, the export dialog's steps, and running the worker.
 import { initialRange, markIn, markOut, rangeIssue, spansInRange, exportFileName, type ExportRange } from '../export/range';
 import type { OverlayChoice } from '../export/overlay';
-import type { ExportFailure, ExportJob, ExportMinute, ExportReply } from '../export/protocol';
+import type { ExportFailure, ExportJob, ExportMinute, ExportReply, ExportStage } from '../export/protocol';
 import { CAMERA_LABEL, CAMERA_ORDER, type CameraId, type Timeline } from '../library/types';
 import { bounds, buildSpans } from '../player/timeline-math';
 import { segmentSource } from '../sei/scan';
@@ -14,7 +14,7 @@ export type ExportStep =
   | { kind: 'off' }
   | { kind: 'marking' }
   | { kind: 'dialog'; error?: string }
-  | { kind: 'running'; done: number; total: number }
+  | { kind: 'running'; done: number; total: number; stage: ExportStage }
   | { kind: 'done'; blob: Blob; name: string; durationS: number };
 
 export interface ExportState {
@@ -138,7 +138,7 @@ export async function runExport(cameras: CameraId[], overlays: OverlayChoice): P
   if (!tl || !s.range || !cameras.length) return;
   const range = s.range;
   engine.pause();
-  exportStore.set({ step: { kind: 'running', done: 0, total: 0 } });
+  exportStore.set({ step: { kind: 'running', done: 0, total: 0, stage: 'data' } });
   let job: ExportJob;
   try {
     job = await buildJob(tl, range, cameras, overlays);
@@ -153,7 +153,7 @@ export async function runExport(cameras: CameraId[], overlays: OverlayChoice): P
     if (worker !== w) return;
     const m = e.data;
     if (m.type === 'progress') {
-      exportStore.set({ step: { kind: 'running', done: m.done, total: m.total } });
+      exportStore.set({ step: { kind: 'running', done: m.done, total: m.total, stage: m.stage } });
       return;
     }
     finishWorker();

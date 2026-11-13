@@ -52,6 +52,9 @@ function lengthPrefixed(nal: Uint8Array): Uint8Array {
   return out;
 }
 
+/** ?dev-synthetic=long-gop: one keyframe per file, as the car may write them (the worst case for seeking). */
+const keyEvery = typeof location !== 'undefined' && new URLSearchParams(location.search).get('dev-synthetic') === 'long-gop' ? SEGMENT_S * FPS : FPS;
+
 async function encodeClip(camera: CameraId, segment: number): Promise<Uint8Array> {
   const canvas = new OffscreenCanvas(W, H);
   const ctx = canvas.getContext('2d')!;
@@ -87,9 +90,10 @@ async function encodeClip(camera: CameraId, segment: number): Promise<Uint8Array
     ctx.font = '500 26px ui-monospace, monospace';
     ctx.fillText(`t = ${t.toFixed(3)} s   frame ${i}`, 24, 110);
     const vf = new VideoFrame(canvas, { timestamp: Math.round((i * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
-    enc.encode(vf, { keyFrame: i % FPS === 0 });
+    enc.encode(vf, { keyFrame: i % keyEvery === 0 });
     vf.close();
-    while (enc.encodeQueueSize > 8) await new Promise((r) => setTimeout(r, 2));
+    // Wait on the encoder, not a timer: timers crawl in a hidden tab.
+    while (enc.encodeQueueSize > 8) await new Promise((r) => enc.addEventListener('dequeue', r, { once: true }));
   }
   await enc.flush();
   enc.close();

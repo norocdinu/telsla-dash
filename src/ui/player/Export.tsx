@@ -15,6 +15,7 @@ import {
 import { appStore, updateSettings } from '../../app/state';
 import { useStore } from '../../app/store';
 import { OVERLAY_LABEL, type OverlayChoice } from '../../export/overlay';
+import type { ExportStage } from '../../export/protocol';
 import { rangeIssue } from '../../export/range';
 import { formatWall } from '../../library/time';
 import { CAMERA_LABEL, CAMERA_ORDER, type CameraId, type Timeline } from '../../library/types';
@@ -64,6 +65,12 @@ export function ExportBar({ tl }: { tl: Timeline }) {
     </div>
   );
 }
+
+/** What the progress bar says before frames are being made. */
+const STAGE_TEXT: Partial<Record<ExportStage, string>> = {
+  data: 'Reading the driving data…',
+  opening: 'Opening the camera files…',
+};
 
 function sizeText(bytes: number): string {
   return bytes >= 1e6 ? `${Math.round(bytes / 1e6)} MB` : `${Math.max(1, Math.round(bytes / 1e3))} KB`;
@@ -142,7 +149,7 @@ export function ExportDialog({ tl }: { tl: Timeline }) {
       {running && (
         <div className="export-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="Exporting">
           <div className="export-progress-bar" style={{ width: `${pct}%` }} />
-          <span className="tabular">{step.total ? `Exporting… ${pct}%` : 'Getting the clips ready…'}</span>
+          <span className="tabular">{STAGE_TEXT[step.stage] ?? `Exporting… ${pct}%`}</span>
         </div>
       )}
       {step.kind === 'dialog' && step.error && (

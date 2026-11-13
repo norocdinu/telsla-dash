@@ -25,7 +25,10 @@ export interface ExportJob {
 
 export type ExportFailure = 'unsupported' | 'novideo' | 'failed';
 
+/** What a running export is doing: reading driving data (page), opening the camera files, making frames. */
+export type ExportStage = 'data' | 'opening' | 'frames';
+
 export type ExportReply =
-  | { type: 'progress'; done: number; total: number }
+  | { type: 'progress'; done: number; total: number; stage: ExportStage }
   | { type: 'done'; mp4: ArrayBuffer; durationS: number }
   | { type: 'error'; kind: ExportFailure; message: string };

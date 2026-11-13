@@ -7,11 +7,12 @@ const post = (m: ExportReply, transfer: Transferable[] = []) => (self as unknown
 self.onmessage = async (e: MessageEvent<ExportJob>) => {
   try {
     let last = 0;
-    const { mp4, durationS } = await runExport(e.data, (done, total) => {
+    const { mp4, durationS } = await runExport(e.data, (done, total, stage) => {
       const now = Date.now();
-      if (done === total || now - last > 100) {
+      // Stage changes and the first and last frame always go out; the rest at most every 100 ms.
+      if (done === 0 || done === total || now - last > 100) {
         last = now;
-        post({ type: 'progress', done, total });
+        post({ type: 'progress', done, total, stage });
       }
     });
     const buf = mp4.buffer as ArrayBuffer;
