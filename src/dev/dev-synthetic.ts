@@ -52,8 +52,14 @@ function lengthPrefixed(nal: Uint8Array): Uint8Array {
   return out;
 }
 
-/** ?dev-synthetic=long-gop: one keyframe per file, as the car may write them (the worst case for seeking). */
-const keyEvery = typeof location !== 'undefined' && new URLSearchParams(location.search).get('dev-synthetic') === 'long-gop' ? SEGMENT_S * FPS : FPS;
+/**
+ * ?dev-synthetic=long-gop: one keyframe per file, as the car may write them (the worst case for seeking).
+ * ?dev-synthetic=no-stss: the same, and the file claims every frame is a keyframe (no stss), so only the
+ * frames' own bytes tell the real one.
+ */
+const mode = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('dev-synthetic') : null;
+const keyEvery = mode === 'long-gop' || mode === 'no-stss' ? SEGMENT_S * FPS : FPS;
+const claimAllKeys = mode === 'no-stss';
 
 async function encodeClip(camera: CameraId, segment: number): Promise<Uint8Array> {
   const canvas = new OffscreenCanvas(W, H);
@@ -72,7 +78,7 @@ async function encodeClip(camera: CameraId, segment: number): Promise<Uint8Array
       const data = new Uint8Array(sei.length + pic.length);
       data.set(sei);
       data.set(pic, sei.length);
-      samples.push({ data, pts: Math.round((chunk.timestamp * TIMESCALE) / 1e6), duration: TIMESCALE / FPS, key: chunk.type === 'key' });
+      samples.push({ data, pts: Math.round((chunk.timestamp * TIMESCALE) / 1e6), duration: TIMESCALE / FPS, key: claimAllKeys || chunk.type === 'key' });
     },
     error: (e) => console.error('dev-synthetic encoder', e),
   });
@@ -92,8 +98,11 @@ async function encodeClip(camera: CameraId, segment: number): Promise<Uint8Array
     const vf = new VideoFrame(canvas, { timestamp: Math.round((i * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
     enc.encode(vf, { keyFrame: i % keyEvery === 0 });
     vf.close();
-    // Wait on the encoder, not a timer: timers crawl in a hidden tab.
-    while (enc.encodeQueueSize > 8) await new Promise((r) => enc.addEventListener('dequeue', r, { once: true }));
+    // Wait on the encoder (timers crawl in a hidden tab), with a timer too: a dequeue that fired before the
+    // listener was added would otherwise leave this waiting for one that never comes.
+    while (enc.encodeQueueSize > 8) {
+      await Promise.race([new Promise((r) => enc.addEventListener('dequeue', r, { once: true })), new Promise((r) => setTimeout(r, 20))]);
+    }
   }
   await enc.flush();
   enc.close();

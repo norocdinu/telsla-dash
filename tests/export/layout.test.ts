@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { avcCodecString, containRect, frameDurations, framesBetween } from '../../src/export/frames';
+import { avcCodecString, containRect, frameDurations, framesBetween, isIdr, nalLengthSize } from '../../src/export/frames';
 import { bitrateFor, gridShape, layoutFor } from '../../src/export/layout';
 
 describe('layout', () => {
@@ -48,6 +48,20 @@ describe('frames', () => {
   test('frameDurations: gaps, the last repeating the one before', () => {
     expect(frameDurations([0, 0.025, 0.05]).map((d) => +d.toFixed(3))).toEqual([0.025, 0.025, 0.025]);
     expect(frameDurations([1])).toEqual([1 / 30]);
+  });
+  test('isIdr finds an IDR picture after other NAL units, in any NAL length size', () => {
+    const sei = [0x06, 0x05, 0x01, 0x00];
+    const idr = [0x65, 0x88, 0x84];
+    const slice = [0x41, 0x9a, 0x02];
+    const four = (...nals: number[][]) => new Uint8Array(nals.flatMap((n) => [0, 0, 0, n.length, ...n]));
+    expect(isIdr(four(sei, idr))).toBe(true);
+    expect(isIdr(four(sei, slice))).toBe(false);
+    expect(isIdr(new Uint8Array([0, idr.length, ...idr]), 2)).toBe(true);
+    expect(nalLengthSize(new Uint8Array([1, 0x64, 0, 0x33, 0xfd]))).toBe(2);
+  });
+  test('isIdr is false for cut-off or empty samples', () => {
+    expect(isIdr(new Uint8Array([0, 0, 0, 9, 0x65]))).toBe(false);
+    expect(isIdr(new Uint8Array())).toBe(false);
   });
   test('avcCodecString', () => {
     expect(avcCodecString(new Uint8Array([1, 0x64, 0x00, 0x2a]))).toBe('avc1.64002a');

@@ -19,6 +19,28 @@ export function frameDurations(times: number[], fallbackS = 1 / 30): number[] {
   });
 }
 
+/** How many bytes prefix each NAL unit in a sample, from the avcC record (usually 4). */
+export function nalLengthSize(avcC: Uint8Array): number {
+  return avcC.length > 4 ? (avcC[4] & 3) + 1 : 4;
+}
+
+/**
+ * Whether a sample holds an IDR picture (NAL type 5): the only frame a decoder can start from.
+ * Read from the bytes, because a file's keyframe list (stss) can name frames that aren't IDRs.
+ */
+export function isIdr(sample: Uint8Array, lengthSize = 4): boolean {
+  let p = 0;
+  while (p + lengthSize < sample.length) {
+    let len = 0;
+    for (let k = 0; k < lengthSize; k++) len = len * 256 + sample[p + k];
+    const start = p + lengthSize;
+    if (len <= 0 || start + len > sample.length) return false;
+    if ((sample[start] & 0x1f) === 5) return true;
+    p = start + len;
+  }
+  return false;
+}
+
 /** The codec string WebCodecs wants for an avcC record, e.g. avc1.64002a. */
 export function avcCodecString(avcC: Uint8Array): string {
   const hex = (b: number) => b.toString(16).padStart(2, '0');

@@ -1,11 +1,11 @@
 // Makes the exported video in the worker: reads only the frames needed from each camera's files, decodes them
 // (VideoDecoder), draws them and the overlay on a canvas, encodes (VideoEncoder) and writes an MP4.
 import { CAMERA_ORDER, type CameraId } from '../library/types';
-import { keyframeBefore, presentationTimes, readIndex, type Mp4Info } from '../mp4/read-mp4';
+import { presentationTimes, readIndex, type Mp4Info } from '../mp4/read-mp4';
 import { writeMp4, type Mp4Sample } from '../mp4/write-mp4';
 import type { LatLon } from '../sei/route';
 import { telemetryAt, type TelemetryTrack } from '../sei/telemetry';
-import { avcCodecString, containRect, frameDurations, framesBetween } from './frames';
+import { avcCodecString, containRect, frameDurations, framesBetween, isIdr, nalLengthSize } from './frames';
 import { bitrateFor, CODECS, KEYFRAME_EVERY_S, layoutFor } from './layout';
 import { drawCellLabel, drawNoVideo, drawOverlay } from './overlay';
 import type { ExportFailure, ExportJob, ExportStage } from './protocol';
@@ -67,8 +67,28 @@ class Clip {
     return this.buf.slice(o - this.bufAt, o - this.bufAt + n);
   }
 
-  isKey(i: number): boolean {
-    return !this.keys || this.keys.has(i);
+  /** Whether sample `i` is a real IDR keyframe, from its bytes. */
+  async isIdr(i: number): Promise<boolean> {
+    return isIdr(await this.sample(i), this.lengthSize);
+  }
+
+  get lengthSize(): number {
+    return nalLengthSize(this.info.avcC);
+  }
+
+  /**
+   * Where decoding must start to show sample `first`: the last real IDR at or before it. The file's keyframe
+   * list is tried first (newest back), then the frames from the start of the file are checked one by one.
+   * When none comes before `first`, the first IDR after it (the frames before then can't be shown); -1 if none.
+   */
+  async startFor(first: number): Promise<number> {
+    const listed = this.keys ? [...this.keys].filter((k) => k <= first).sort((a, b) => b - a) : [];
+    for (const k of listed.slice(0, 8)) if (await this.isIdr(k)) return k;
+    let best = -1;
+    for (let i = 0; i <= first; i++) if (await this.isIdr(i)) best = i;
+    if (best >= 0) return best;
+    for (let i = first + 1; i < this.pts.length; i++) if (await this.isIdr(i)) return i;
+    return -1;
   }
 
   /** Lets go of the read-ahead window once the clip is done with. */
@@ -94,6 +114,8 @@ class ClipDecoder {
   private wake: (() => void) | null = null;
   /** Frames at or before this time (µs) are behind: only the latest of them is kept. */
   private limit = -Infinity;
+  private readonly first: number;
+  private started = false;
 
   constructor(
     private readonly clip: Clip,
@@ -102,7 +124,8 @@ class ClipDecoder {
   ) {
     const order = framesBetween(clip.pts, fromS, toS);
     const first = order.length ? Math.min(...order) : 0;
-    this.next = keyframeBefore(clip.info, first);
+    this.first = first;
+    this.next = -1; // found on the first frameAt (startFor reads the file)
     // Feed a little past the last frame needed, so reordered frames come out too.
     this.last = Math.min(clip.pts.length - 1, (order.length ? Math.max(...order) : first) + 4);
     this.decoder = new VideoDecoder({
@@ -145,13 +168,26 @@ class ClipDecoder {
   async frameAt(t: number): Promise<VideoFrame | null> {
     const limit = us(t) + 500;
     this.limit = limit;
+    if (!this.started) {
+      this.started = true;
+      this.next = this.broken ? -1 : await this.clip.startFor(this.first).catch(() => -1);
+      if (this.next < 0) this.broken = true;
+    }
     this.dropBehind();
     while (!this.broken && !this.ready.some((f) => f.timestamp > limit)) {
       if (this.next <= this.last) {
         const i = this.next++;
         const data = await this.clip.sample(i);
         if (this.broken) break;
-        this.decoder.decode(new EncodedVideoChunk({ type: this.clip.isKey(i) ? 'key' : 'delta', timestamp: us(this.clip.pts[i]), data }));
+        // Keyframe or not from the bytes: Chrome checks, and rejects a "key" chunk that isn't an IDR.
+        const type = isIdr(data, this.clip.lengthSize) ? 'key' : 'delta';
+        try {
+          this.decoder.decode(new EncodedVideoChunk({ type, timestamp: us(this.clip.pts[i]), data }));
+        } catch {
+          // This camera can't be decoded from here: it draws as "no video"; the others carry on.
+          this.broken = true;
+          break;
+        }
         this.fed++;
         if (this.fed - this.outputs >= IN_FLIGHT) await this.waitOutput(40);
       } else if (!this.flushed) {
