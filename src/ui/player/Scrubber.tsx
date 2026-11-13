@@ -7,6 +7,7 @@ import type { Timeline } from '../../library/types';
 import type { Moment } from '../../moments/detect';
 import { bounds, buildSpans } from '../../player/timeline-math';
 import { tickPercent } from '../format';
+import { ExportRangeMarks } from './ExportRangeMarks';
 
 const NO_MOMENTS: Moment[] = [];
 
@@ -73,6 +74,7 @@ export function Scrubber({ tl }: { tl: Timeline }) {
       {moments.map((m) => (
         <span key={`${m.type}-${m.wallMs}`} className={`tick tick-${m.type}`} style={{ left: `${tickPercent(b, m.wallMs)}%` }} />
       ))}
+      <ExportRangeMarks timelineId={tl.id} b={b} track={track} />
       <span className="scrubber-thumb" style={{ left: `${played}%` }} />
       {hover && (
         <span className="scrubber-tip tabular" style={{ left: `${hover.pct}%` }}>

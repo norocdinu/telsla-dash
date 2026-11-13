@@ -14,6 +14,8 @@ export function ConfirmDialog({
   confirmDisabled = false,
   busy = false,
   extra,
+  tone = 'danger',
+  cancelLabel = 'Cancel',
 }: {
   title: string;
   children: ReactNode;
@@ -25,6 +27,9 @@ export function ConfirmDialog({
   busy?: boolean;
   /** Extra controls shown while busy (e.g. Stop). */
   extra?: ReactNode;
+  /** Red for destructive questions; blue when nothing is destroyed (e.g. exporting). */
+  tone?: 'danger' | 'primary';
+  cancelLabel?: string;
 }) {
   const titleId = useId();
   const bodyId = useId();
@@ -50,7 +55,7 @@ export function ConfirmDialog({
       return;
     }
     if (e.key !== 'Tab') return;
-    const focusable = [...(box.current?.querySelectorAll<HTMLElement>('button:not(:disabled)') ?? [])];
+    const focusable = [...(box.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled)') ?? [])];
     if (!focusable.length) return;
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
@@ -79,9 +84,9 @@ export function ConfirmDialog({
           ) : (
             <>
               <button ref={cancel} type="button" className="btn btn-quiet" onClick={onCancel}>
-                Cancel
+                {cancelLabel}
               </button>
-              <button type="button" className="btn btn-danger" onClick={onConfirm} disabled={confirmDisabled}>
+              <button type="button" className={`btn ${tone === 'danger' ? 'btn-danger' : 'btn-primary'}`} onClick={onConfirm} disabled={confirmDisabled}>
                 {confirmLabel}
               </button>
             </>

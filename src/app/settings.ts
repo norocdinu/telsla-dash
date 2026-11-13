@@ -1,3 +1,4 @@
+import { DEFAULT_OVERLAYS, type OverlayChoice } from '../export/overlay';
 import { CAMERA_ORDER, type CameraId } from '../library/types';
 
 export interface Settings {
@@ -7,12 +8,14 @@ export interface Settings {
   /** The "Stats for nerds" panel over the video. */
   showStats: boolean;
   lastView: CameraId | 'grid';
+  /** What Export burns into the video. */
+  exportOverlays: OverlayChoice;
 }
 
 export const SETTINGS_KEY = 'dashcam-viewer.settings';
 
 function defaults(locale: string): Settings {
-  return { units: locale === 'en-US' ? 'mph' : 'kmh', showPanel: true, showMap: true, showStats: false, lastView: 'front' };
+  return { units: locale === 'en-US' ? 'mph' : 'kmh', showPanel: true, showMap: true, showStats: false, lastView: 'front', exportOverlays: { ...DEFAULT_OVERLAYS } };
 }
 
 /** Settings are a convenience: any storage problem just gives the defaults. */
@@ -32,6 +35,10 @@ export function loadSettings(locale: string, storage: Pick<Storage, 'getItem'> |
   if (typeof o.showMap === 'boolean') s.showMap = o.showMap;
   if (typeof o.showStats === 'boolean') s.showStats = o.showStats;
   if (o.lastView === 'grid' || CAMERA_ORDER.includes(o.lastView as CameraId)) s.lastView = o.lastView as Settings['lastView'];
+  if (o.exportOverlays && typeof o.exportOverlays === 'object') {
+    const e = o.exportOverlays as Record<string, unknown>;
+    for (const k of Object.keys(DEFAULT_OVERLAYS) as (keyof OverlayChoice)[]) if (typeof e[k] === 'boolean') s.exportOverlays[k] = e[k];
+  }
   return s;
 }
 

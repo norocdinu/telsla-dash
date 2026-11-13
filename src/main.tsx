@@ -9,6 +9,7 @@ import './styles/list.css';
 import './styles/map.css';
 import './styles/manage.css';
 import './styles/stats.css';
+import './styles/export.css';
 import { App } from './ui/App';
 
 createRoot(document.getElementById('root')!).render(
@@ -23,4 +24,8 @@ registerServiceWorker();
 if (import.meta.env.DEV) {
   const root = new URLSearchParams(location.search).get('dev-root');
   if (root) void import('./dev/dev-samples').then(async (m) => loadFromSources(await m.devSampleSources(root)));
+  // ?dev-synthetic: a small made-up event encoded in the browser (no real clips needed).
+  if (new URLSearchParams(location.search).has('dev-synthetic')) {
+    void import('./dev/dev-synthetic').then(async (m) => loadFromSources(await m.devSyntheticSources()));
+  }
 }
